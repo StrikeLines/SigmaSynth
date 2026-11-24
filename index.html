@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sigma Synth</title>
+<link rel="icon" href="sigma.ico">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0a0b0d; --panel:#141619; --panel2:#1b1e22; --line:#2a2e35; --text:#e8eaed; --dim:#8b929b;
@@ -12,12 +15,16 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:radial-gradient(ellipse at 50% -10%,#1d2530 0%,var(--bg) 60%) fixed}
-header.top{display:flex;align-items:center;flex-wrap:wrap;gap:12px;max-width:1260px;margin:0 auto;padding:14px 16px 4px}
 #deviceMain{position:absolute;left:0;top:104px;width:1170px;height:360px}
-.logo{position:absolute;left:64px;top:60px;font:300 42px/1 "Segoe UI",system-ui,-apple-system,sans-serif;letter-spacing:2px;white-space:nowrap;user-select:none;
-  color:#9b7bff;   /* paint-filled engraving in the outline's violet: shadowed top lip, light-catching bottom lip */
-  text-shadow:0 -1px 0 rgba(0,0,0,.7),0 1px 0 rgba(235,220,255,.18),0 2px 2px rgba(0,0,0,.25)}
-.logo .sig{font-weight:300;font-size:1.08em;vertical-align:-.03em}
+/* retro stripe logo: three speed stripes (drum orange -> violet) + italic Audiowide wordmark, printed on the case */
+.logo{position:absolute;left:62px;top:66px;display:flex;align-items:center;gap:12px;white-space:nowrap;user-select:none}
+.logo .stripes{display:flex;flex-direction:column;gap:5px;transform:skewX(-14deg)}
+.logo .stripes i{display:block;width:52px;height:6px;border-radius:1px}
+.logo .stripes i:nth-child(1){background:var(--accent3)}
+.logo .stripes i:nth-child(2){background:#c77dff}
+.logo .stripes i:nth-child(3){background:#9b7bff}
+.logo .word{font:400 40px/1 Audiowide,"Arial Black",system-ui,sans-serif;font-style:italic;letter-spacing:2px;color:#ece4ff;
+  text-shadow:0 1px 0 rgba(0,0,0,.6)}
 .toprow{position:absolute;left:24px;right:24px;top:142px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07) 12%,rgba(255,255,255,.07) 88%,transparent);box-shadow:0 1px 0 rgba(0,0,0,.6)}
 .devmix{position:absolute;right:58px;top:48px;margin:0;background:#121315;border:1px solid #050505;box-shadow:inset 0 1px 3px #000,0 1px 0 rgba(255,255,255,.05);padding:5px 14px 3px;gap:14px}
 .mixer{margin-left:auto;display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 16px 6px}
@@ -31,11 +38,9 @@ header.top{display:flex;align-items:center;flex-wrap:wrap;gap:12px;max-width:126
 .mkn .ind{position:absolute;left:50%;top:3px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:#f2f2f2;transform-origin:50% 13px}
 .mk label{font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--kc)}
 .mk output{font-size:10px;color:#c9ced4;font-variant-numeric:tabular-nums;white-space:nowrap}
-header.top h1{margin:0;font-size:20px;letter-spacing:.5px}
-header.top span{color:var(--dim);font-size:13px}
 
 /* ---------- device ---------- */
-#stage{position:relative;max-width:1260px;margin:10px auto 0;padding:0 16px}
+#stage{position:relative;max-width:1260px;margin:22px auto 0;padding:0 16px}
 #stageInner{position:relative;width:100%}
 #device{position:absolute;top:0;left:0;width:1170px;height:464px;transform-origin:0 0;user-select:none;-webkit-user-select:none}
 .body{position:absolute;left:0;right:0;top:40px;bottom:0;border-radius:38px;
@@ -147,6 +152,13 @@ button.active{background:#173a34;border-color:var(--accent);color:#bff7ec}
 .eng-chords{--sec:rgba(47,224,192,.75)} .eng-notes{--sec:rgba(255,95,162,.75)}
 .grp.sect{border-top:2px solid var(--sec);margin-top:16px;padding-top:9px}   /* colored divider between the card's main sections */
 .gname{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6c737c;margin-bottom:3px}
+.ui-basic .adv{display:none!important}
+.grp>.gname{cursor:pointer;user-select:none}
+.grp>.gname .chev{display:inline-block;width:12px;transition:transform .15s}
+.grp.collapsed>.gname .chev{transform:rotate(-90deg)}
+.grp.collapsed>*:not(.gname){display:none!important}
+.modebar{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:-4px 0 -6px}
+.slots .none{grid-column:1/-1;margin:2px 0}
 .sl{display:grid;grid-template-columns:100px 1fr 58px;align-items:center;gap:8px;height:24px}
 .sl label{font-size:12px;color:var(--dim);display:flex;align-items:center;min-width:0;white-space:nowrap}
 /* on-screen help: faint (i) icons and their popup */
@@ -163,11 +175,11 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 .chk{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:5px}
 .transport{display:flex;gap:6px;flex-wrap:wrap}
 .transport button{min-width:64px;font-weight:600}
-#btnRec.active{background:#4a1414;border-color:var(--rec);color:#ffd0d0}
 #loopStatus{font:12px ui-monospace,Consolas,monospace;color:#c9ced4;margin-top:6px}
 .slots{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
 .slots button{font-size:11px;padding:6px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .slots button.empty{color:#5c636b}
+.slots button.add{border-style:dashed;color:var(--dim)}
 .slots.saving button{border-color:var(--rec)}
 .loopslots{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
 .loopslots button{white-space:normal;line-height:1.25;padding:6px 6px;text-align:left;min-height:42px}
@@ -177,7 +189,6 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 .help kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font:11px ui-monospace,Consolas,monospace;color:var(--text)}
 .help b{color:var(--text);font-weight:600}
 .pets{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px}
-.pets canvas{width:100%;aspect-ratio:1;background:#030303;border-radius:4px;image-rendering:pixelated}
 .small{font-size:11px;color:var(--dim)}
 /* hardware transport buttons */
 .tbtn{position:absolute;top:322px;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;touch-action:none;cursor:pointer;
@@ -205,8 +216,6 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 .lctrl input[type=number]{width:64px}
 .lsep{width:1px;height:22px;background:var(--line);margin:0 4px}
 .transport button:disabled{opacity:.4;cursor:default}
-#btnRec.armed{background:#3a1616;border-color:var(--rec);color:#ffd0d0;animation:tblink2 .7s steps(2,start) infinite}
-#btnRec.dub{background:#3d2e12;border-color:var(--accent3);color:#ffe2b3}
 @keyframes tblink2{50%{border-color:var(--line)}}
 .card h3 .dot.d{background:var(--accent3)}
 .eng-drums input[type=range]{accent-color:var(--accent3)}
@@ -222,14 +231,12 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 </style>
 </head>
 <body>
-<header class="top"><h1>sigma synth</h1><span>chord + melody mini synth — always in key</span>
-</header>
 
 <div id="stage"><div id="stageInner"><div id="device">
   <div class="body"></div>
   <div class="screw" style="left:40px;top:90px"></div>
   <div class="screw" style="left:1130px;top:90px;opacity:.6"></div>
-  <div class="logo" aria-label="Sigma Synth">Sigma <span class="sig">Σ</span>ynth</div>
+  <div class="logo" aria-label="Sigma Synth"><span class="stripes" aria-hidden="true"><i></i><i></i><i></i></span><span class="word">SIGMA</span></div>
   <div class="toprow"></div>
   <div class="mixer devmix" title="Mix levels: affect live playing and loop playback. Drag up/down, scroll, double-click = 0 dB">
       <span class="mtitle">MIX</span>
@@ -278,16 +285,18 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
     <div class="lhead"><h3>Looper &amp; clock <span class="tag" id="loopLen"></span></h3><div id="loopStatus">■ EMPTY</div></div>
     <canvas id="loopCanvas"></canvas>
     <div class="lctrl">
-      <div class="transport">
-        <button id="btnRec" title="Arm, then your first note starts recording. While playing: overdub on/off. While armed: tap 3× to set the tempo.">● Rec</button><button id="btnPlay" title="Play / stop the loop">▶ Play</button><button id="btnMult" title="Double the whole loop (before recording: add a bar)">⧉ Multiply</button><button id="btnUndo" title="Undo the last overdub or multiply (before recording: remove a bar)">↶ Undo</button><button id="btnClear" title="Hold to erase the loop">✕ Clear (hold)</button><button id="btnTap" title="Before recording: tap tempo. Free loops: tap two downbeats to re-grid.">◉ Tap</button><button id="btnMetro" title="Click track">Metronome</button>
-      </div>
+      <label for="selRoot">Key</label><select id="selRoot" title="Key (↑ / ↓). Changing it transposes the loop."></select><select id="selScale" title="Scale (← / →)"></select>
       <span class="lsep"></span>
       <label for="bpm">Tempo</label><input type="number" id="bpm" min="40" max="240" step="0.1" title="BPM">
       <label for="selQuant">Quantize</label><select id="selQuant"><option value="0">Off</option><option value="4">1/4</option><option value="8">1/8</option><option value="16">1/16</option><option value="32">1/32</option><option value="64">1/64</option></select>
       <label for="selMagnet" title="Pulls presses near a beat exactly onto the beat">Magnet</label><select id="selMagnet"><option value="0">Off</option><option value="1">Light</option><option value="2">Medium</option><option value="3">Strong</option></select>
       <div class="seg" id="segLoopMode" title="Fixed: loop length in bars (Multiply sets it). Free: Rec starts and ends the loop; bars + tempo are detected."><button data-v="fixed">Fixed</button><button data-v="free">Free</button></div>
+      <span class="lsep"></span>
+      <button id="btnMetro" title="Click track">Metronome</button><button id="btnMp3" title="Play the loop from the top and save it as an MP3 (you can jam along, it gets recorded too)">⤓ Export MP3</button>
     </div>
   </section>
+
+  <div class="modebar"><span class="small">Controls</span><div class="seg" id="segUi"><button data-v="basic">Basic</button><button data-v="advanced">Advanced</button></div><span class="small" id="uiHint"></span></div>
 
   <div class="enginerow">
       <section class="card eng-chords" id="card-chords"></section>
@@ -297,16 +306,16 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
         <h3><span class="dot d"></span>Drums <span class="tag">right side · 11 pads</span></h3>
         <div class="row"><label style="display:flex;align-items:center">Kit<button type="button" class="info" data-help="kit" aria-label="About Kit">i</button></label><select id="selKit"></select><button id="btnDrumMode">Use drums on the right side</button></div>
         <div id="drumSliders"></div>
-        <div class="grp"><div class="gname">Pads · load your own samples<button type="button" class="info" data-help="pads" aria-label="About Pads">i</button></div><div id="drumList"></div></div>
-        <p class="small">Drop an audio file (wav, mp3, ogg…) onto a drum pad, or use Load. Your samples are saved in this browser.</p>
+        <div class="grp adv"><div class="gname">Pads · load your own samples<button type="button" class="info" data-help="pads" aria-label="About Pads">i</button></div><div id="drumList"></div></div>
+        <p class="small adv">Drop an audio file (wav, mp3, ogg…) onto a drum pad, or use Load. Your samples are saved in this browser.</p>
         <input type="file" id="drumFile" accept="audio/*" hidden>
       </section>
   </div>
 
 
-  <section class="card" id="card-loops">
+  <section class="card wide" id="card-loops">
     <h3>Saved loops <span class="tag">your tracks</span><button type="button" class="info" data-help="loops" aria-label="About Saved loops">i</button></h3>
-    <div class="row"><button id="btnLoopSave">Save loop to slot…</button><button id="btnLoopDel">Delete…</button><span class="small" id="loopHint"></span></div>
+    <div class="row"><button id="btnLoopDel">Delete…</button><span class="small" id="loopHint"></span></div>
     <div class="slots loopslots" id="loopSlots"></div>
     <div class="row"><label class="chk"><input type="checkbox" id="chkLoopSound"> Load sounds &amp; mix with the loop</label></div>
     <div class="row"><button id="btnLoopExport">Export all…</button><button id="btnLoopImport">Import…</button><input type="file" id="loopFile" accept=".json,application/json" hidden></div>
@@ -315,7 +324,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
   <section class="card">
     <h3>Presets</h3>
     <div class="row"><label>Factory</label><select id="selFactory" style="flex:1"></select></div>
-    <div class="row"><label>User slots</label><button id="btnSaveMode">Save to slot…</button><span class="small" id="saveHint"></span></div>
+    <div class="row"><label>Your sounds</label><button id="btnSaveMode">Save sound…</button><span class="small" id="saveHint"></span></div>
     <div class="slots" id="slots"></div>
   </section>
 
@@ -328,25 +337,19 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
     <p class="small">In: ch 1 → notes engine, ch 2 → chords engine, ch 10 → drums (GM drum notes), pitch bend, mod wheel (CC1) → vibrato, CC 70–73 → the four knobs. Out: notes on ch 1, chords on ch 2, drums on ch 10.</p>
   </section>
 
-  <section class="card">
-    <h3>Pet</h3>
-    <div class="small" id="petInfo"></div>
-    <div class="pets" id="pets"></div>
-  </section>
-
   <section class="card wide">
     <h3>How to play</h3>
     <div class="help">
       <b>Chords (left hand):</b> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> / <kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> — the 7 chords of the key. &nbsp;
       <b>Notes (right hand):</b> <kbd>U</kbd><kbd>I</kbd><kbd>O</kbd><kbd>P</kbd><kbd>[</kbd><kbd>]</kbd> / <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd> — 11 steps of the scale, starting two notes below the key's root (the root is on <kbd>O</kbd>, outlined in pink).<br>
-      <b>Octave:</b> <kbd>Z</kbd>/<kbd>X</kbd> for chords, <kbd>N</kbd>/<kbd>M</kbd> for notes. &nbsp;
-      <b>Key:</b> <kbd>-</kbd>/<kbd>=</kbd>, or turn the center encoder. Click the encoder to change the scale. &nbsp;
-      <b>Looper:</b> <kbd>Space</kbd> record on/off, <kbd>Enter</kbd> play/stop, <kbd>1</kbd> rec button (tap 3× while armed to set the tempo), <kbd>2</kbd> multiply, <kbd>3</kbd> undo, hold <kbd>0</kbd> to clear, <kbd>T</kbd> tap (re-grid a free loop on its downbeats).<br>
-      <b>Left stick (chord variations):</b> drag it or hold the <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> arrow keys: ↑ 7th · ↗ 9th · → sus4 · ↘ sus2 · ↓ parallel (major↔minor) · ↙ 2nd inversion · ← 1st inversion · ↖ 6th.<br>
+      <b>Octave:</b> <kbd>Z</kbd>/<kbd>X</kbd> for chords, <kbd>,</kbd>/<kbd>.</kbd> for notes. &nbsp;
+      <b>Key:</b> <kbd>↑</kbd>/<kbd>↓</kbd> (or <kbd>-</kbd>/<kbd>=</kbd>, or turn the center encoder). Changing the key transposes a recorded loop with it. <b>Scale / progression:</b> <kbd>←</kbd>/<kbd>→</kbd>, or click the encoder. &nbsp;
+      <b>Looper:</b> <kbd>Space</kbd> record on/off, <kbd>Enter</kbd> play/stop, <kbd>1</kbd> rec button (tap 3× while armed to set the tempo), <kbd>2</kbd> multiply, <kbd>Backspace</kbd> undo (hold it to clear), <kbd>T</kbd> tap (re-grid a free loop on its downbeats), <kbd>Delete</kbd> metronome on/off.<br>
+      <b>Left stick (chord variations):</b> drag it (or use a gamepad): ↑ 7th · ↗ 9th · → sus4 · ↘ sus2 · ↓ parallel (major↔minor) · ↙ 2nd inversion · ← 1st inversion · ↖ 6th.<br>
       <b>Arpeggiator:</b> click the ARP switch at the top left or press <kbd>`</kbd> to cycle Off → Up → Down → Random. Hold a chord and it plays the chord's notes one at a time. Set rate, gate and octaves in the Chords engine card.<br>
       <b>Drums:</b> press <kbd>\</kbd> or use the NOTES / DRUMS switch at the top right to turn the right-hand pads into an 11-piece drum kit. The same keys play it.<br>
       <b>Right stick (bend · vib):</b> drag it left/right to bend the pitch, up for vibrato, down to close the filter. It springs back when you let go. A plugged-in gamepad's thumbsticks also work.<br>
-      <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards. Click the screen to switch between scope, spectrum and pet.
+      <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards. Click the screen to switch between scope, spectrum and the loop view.
     </div>
   </section>
 
@@ -355,10 +358,9 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
     <div class="cols2">
       <div>
         <div class="gname">Global</div>
-        <div class="row"><label>Key</label><select id="selRoot"></select><select id="selScale"></select></div>
         <div class="row"><label>Right side</label><div class="seg" id="segRight"><button data-v="notes">Notes</button><button data-v="drums">Drums</button></div></div>
         <div class="row"><label>Note mode</label><div class="seg" id="segMode"><button data-v="mono">Mono</button><button data-v="poly">Poly (4)</button></div></div>
-        <div class="row"><label>Screen</label><div class="seg" id="segScreen"><button data-v="scope">Scope</button><button data-v="spectrum">Spectrum</button><button data-v="pet">Pet</button><button data-v="loop">Loop</button></div></div>
+        <div class="row"><label>Screen</label><div class="seg" id="segScreen"><button data-v="scope">Scope</button><button data-v="spectrum">Spectrum</button><button data-v="loop">Loop</button></div></div>
         <div class="row"><label>Left stick</label><select id="selStickL"></select></div>
         <div class="row"><label>Right stick</label><select id="selStickR"></select></div>
         <div class="sl"><label>Master</label><input type="range" id="master" min="0" max="1000"><output id="masterOut"></output></div>
@@ -398,7 +400,10 @@ const SCALES={
 // custom chord sets: chord key k -> [root offset from the key, 'm' for minor, the 7th to use]
 const CHORD_SETS={
   'Daft Punk':{chords:[[0,'m',10],[-2,'',10],[5,'',10],[-4,'',11],[-5,'m',10],[3,'',11],[5,'m',10]],   // Gm F C Eb Dm | Bb Cm (in G)
-               labels:['i','♭VII','IV','♭VI','v','III','iv'],root:7}
+               labels:['i','♭VII','IV','♭VI','v','III','iv'],root:7},
+  // blues shuffle: every chord a dominant 7th (seventh: the 7th is in the plain chord); keeps the current key
+  'Blues':{chords:[[0,'',10],[5,'',10],[7,'',10],[-2,'',10],[-4,'',10],[2,'',10],[3,'',10]],   // I7 IV7 V7 | bVII7 bVI7 II7 bIII7
+           labels:['I7','IV7','V7','♭VII7','♭VI7','II7','♭III7'],seventh:true}
 };
 const SCALE_ABBR={'Major':'MAJOR','Minor':'MINOR','Harmonic Minor':'HARM MIN','Melodic Minor':'MEL MIN','Dorian':'DORIAN','Phrygian':'PHRYGIAN','Lydian':'LYDIAN','Mixolydian':'MIXOLYD','Locrian':'LOCRIAN','Pentatonic Major':'PENT MAJ','Pentatonic Minor':'PENT MIN','Blues':'BLUES','Whole Tone':'WHOLE TN','Daft Punk':'DAFT PUNK'};
 const WAVES=[['sine','SINE'],['triangle','TRI'],['sawtooth','SAW'],['square','SQUARE'],['pulse','PULSE'],['supersaw','SUPER'],['organ','ORGAN'],['hollow','HOLLOW']];
@@ -464,13 +469,13 @@ const VARS={
 };
 const CHORD_TYPES={'0,4,7':'','0,3,7':'m','0,3,6':'dim','0,4,8':'aug','0,2,7':'sus2','0,5,7':'sus4','0,4,7,11':'maj7','0,4,7,10':'7','0,3,7,10':'m7',
   '0,3,6,10':'m7b5','0,3,6,9':'dim7','0,3,7,11':'mM7','0,4,8,11':'maj7#5','0,4,8,10':'7#5','0,2,4,11':'maj9','0,2,4,10':'9','0,2,3,10':'m9',
-  '0,2,3,11':'mM9','0,4,7,9':'6','0,3,7,9':'m6','0,4,6':'b5','0,2,6':'sus2b5','0,5,6':'sus4b5','0,1,7':'sus b2','0,2,4,8':'aug9'};
+  '0,2,3,11':'mM9','0,4,7,9':'6','0,3,7,9':'m6','0,4,6':'b5','0,2,6':'sus2b5','0,5,6':'sus4b5','0,1,7':'sus b2','0,2,4,8':'aug9','0,2,4,9,10':'13','0,5,7,10':'7sus4','0,2,7,10':'7sus2'};
 const ROMAN=['I','II','III','IV','V','VI','VII'];
 
 /* =================== state =================== */
 function defaultEngine(){const e={wave:'sawtooth',filterType:'lowpass',moog:false,arp:'off',farp:'off',farpTrig:'tempo'};for(const k in PARAMS)e[k]=PARAMS[k].def;return e;}
 const DEFAULT_STATE=()=>({root:0,scale:'Major',bpm:100,master:0.8,noteMode:'mono',delayDiv:'1/8.',delayFb:0.35,revSize:0.5,screen:'scope',
-  rightMode:'notes',drums:{kit:'808',volume:0.8,tune:0,decay:1,cutoff:18000,resonance:0,reverb:0.1,levels:new Array(11).fill(1)},knobs:{c1:'cutoff',c2:'resonance',n1:'cutoff',n2:'resonance'},knobRev:2,stickL:'variation',stickR:'bend',quant:16,magnet:2,loopMode:'fixed',loopSound:true,mix:{chords:1,notes:1,drums:1,click:0.3},chords:defaultEngine(),notes:defaultEngine()});
+  rightMode:'notes',drums:{kit:'808',volume:0.8,tune:0,decay:1,cutoff:18000,resonance:0,reverb:0.1,levels:new Array(11).fill(1)},knobs:{c1:'cutoff',c2:'resonance',n1:'cutoff',n2:'resonance'},knobRev:2,stickL:'variation',stickR:'bend',quant:16,magnet:2,loopMode:'fixed',loopSound:true,ui:'basic',collapsed:{},mix:{chords:1,notes:1,drums:1,click:0.3},chords:defaultEngine(),notes:defaultEngine()});
 let S=DEFAULT_STATE();
 // the UI fork keeps its own saved settings (gammaweb-ui.*); the first time, it starts from the original's (gammaweb.*)
 const store={get(k,d){try{let v=localStorage.getItem(k); if(v==null&&k.startsWith('gammaweb-ui.')) v=localStorage.getItem('gammaweb.'+k.slice(12)); return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
@@ -755,8 +760,11 @@ function chordMidis(k,variation='none'){
   const v=VARS[variation]||VARS.none, base=48+12*S.chords.octave, cs=CHORD_SETS[S.scale];
   if(cs){   // fixed chord set: build each chord from its root + quality, the stick variations as interval shapes
     const [r,q,sev]=cs.chords[k%cs.chords.length], root=base+S.root+r, third=q==='m'?3:4;
-    const SHAPES={none:[0,third,7],up:[0,third,7,sev],upright:[0,third,sev,14],right:[0,5,7],downright:[0,2,7],
-      down:[0,q==='m'?4:3,7],downleft:[0,third,7],left:[0,third,7],upleft:[0,third,7,9]};
+    const SHAPES=cs.seventh
+      ? {none:[0,third,7,sev],up:[0,third,sev,14],upright:[0,third,sev,14,21],right:[0,5,7,sev],downright:[0,2,7,sev],   // 7, 9, 13, 7sus4, 7sus2
+         down:[0,q==='m'?4:3,7,sev],downleft:[0,third,7,sev],left:[0,third,7,sev],upleft:[0,third,7,9]}                // minor 7, inversions, 6
+      : {none:[0,third,7],up:[0,third,7,sev],upright:[0,third,sev,14],right:[0,5,7],downright:[0,2,7],
+         down:[0,q==='m'?4:3,7],downleft:[0,third,7],left:[0,third,7],upleft:[0,third,7,9]};
     const m=(SHAPES[variation]||SHAPES.none).map(i=>root+i);
     for(let i=0;i<(v.inv||0);i++) m.push(m.shift()+12);
     return m;
@@ -1064,7 +1072,6 @@ function liveOn(eng,midis,vel=1,fromMidi=false,noXP=false,tm=null){
   const t=tm||{play:ctx.currentTime,log:ctx.currentTime};
   const h={eng,midis:[...midis],vel,fromMidi,play:t.play,ev:looper.recordOn(eng,midis,vel,t.log,{exact:!!tm})};
   if(!fromMidi) midiSend(eng,midis,true,vel,toPerf(t.play));
-  if(!noXP) pet.gain(1);
   lastActivity=performance.now();
   return h;
 }
@@ -1087,7 +1094,7 @@ const chordCtl={
     this.voices.forEach(v=>v.release(t)); this.voices=[]; liveOff(this.h,tm.log); this.h=null; arp.stop();   // the old chord ends exactly where the new one starts
     const midis=chordMidis(k,this.variation);
     this.cur={key:k,midis};
-    if(arp.on){arp.start(); pet.gain(1); lastActivity=performance.now();}
+    if(arp.on){arp.start(); lastActivity=performance.now();}
     else{this.voices=midis.map(m=>engines.chords.play(m,0.9,t)); this.h=liveOn('chords',midis,0.9,false,false,tm);}
     lastPlayed=this.label();
   },
@@ -1474,8 +1481,18 @@ function setParam(en,pid,v,opts={}){
   if(!opts.silent) flash(`${en==='chords'?'CHD':'NOTE'} ${P?P.short:({farp:'F-ARP',farpTrig:'F-ARP TRIG',filterType:'FILTER'}[pid]||pid.toUpperCase())} ${P?P.fmt(v):String(v).toUpperCase()}`);
   saveState();
 }
-function setRoot(r){S.root=((r%12)+12)%12; renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`KEY ${pcName(S.root)} ${SCALE_ABBR[S.scale]}`); saveState();}
-function setScale(s){if(CHORD_SETS[s]&&!CHORD_SETS[S.scale]) S.root=CHORD_SETS[s].root; S.scale=s; renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`${pcName(S.root)} ${SCALE_ABBR[S.scale]}`); saveState();}
+function transposeLoop(d){   // shift every recorded chord/note (not drums) by d semitones
+  if(!d||!looper.events.length) return false;
+  looper.events.forEach(e=>{if(e.eng!=='drums') e.midis=e.midis.map(m=>m+d);});
+  return true;
+}
+function setRoot(r){
+  const nr=((r%12)+12)%12, d=((nr-S.root)%12+18)%12-6;   // the short way round: -6..+5 semitones
+  S.root=nr; const moved=transposeLoop(d);
+  renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`KEY ${pcName(S.root)} ${SCALE_ABBR[S.scale]}`+(moved?` · LOOP ${d>0?'+':''}${d}`:'')); saveState();
+}
+function setScale(s){if(CHORD_SETS[s]&&!CHORD_SETS[S.scale]&&CHORD_SETS[s].root!=null&&!looper.events.length) S.root=CHORD_SETS[s].root;   // never jump the key under a recorded loop
+  S.scale=s; renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`${pcName(S.root)} ${SCALE_ABBR[S.scale]}`); saveState();}
 
 /* =================== device UI =================== */
 const PAD_POS={
@@ -1599,11 +1616,6 @@ function applyStickModes(){
 const KEYMAP={KeyQ:['c',0],KeyW:['c',1],KeyE:['c',2],KeyR:['c',3],KeyS:['c',4],KeyD:['c',5],KeyF:['c',6],
   KeyU:['n',0],KeyI:['n',1],KeyO:['n',2],KeyP:['n',3],BracketLeft:['n',4],BracketRight:['n',5],
   KeyJ:['n',6],KeyK:['n',7],KeyL:['n',8],Semicolon:['n',9],Quote:['n',10]};
-const arrows=new Set();
-function arrowStick(){
-  const x=(arrows.has('ArrowRight')?1:0)-(arrows.has('ArrowLeft')?1:0), y=(arrows.has('ArrowUp')?1:0)-(arrows.has('ArrowDown')?1:0);
-  stickSrc.L=(x||y)?'key':null; setStick('L',x,y);
-}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button'); if(b&&e.detail>0) b.blur();});   // mouse-clicked buttons don't keep the keyboard
 function isTyping(e){const t=e.target;return t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&!['range','checkbox','button','file'].includes(t.type)));}
 document.addEventListener('keydown',e=>{
@@ -1615,21 +1627,28 @@ document.addEventListener('keydown',e=>{
   }
   const m=KEYMAP[e.code];
   if(m){e.preventDefault(); if(!e.repeat) padDown(m[0],m[1]); return;}
-  if(e.code.startsWith('Arrow')){e.preventDefault(); ensureAudio(); if(!arrows.has(e.code)){arrows.add(e.code); arrowStick();} return;}
+  if(e.code.startsWith('Arrow')){   // up/down: key, left/right: scale (the chord progression)
+    e.preventDefault(); ensureAudio(); if(e.repeat) return;
+    if(e.code==='ArrowUp') setRoot(S.root+1); else if(e.code==='ArrowDown') setRoot(S.root-1);
+    else{const ks=Object.keys(SCALES), i=ks.indexOf(S.scale); setScale(ks[(i+(e.code==='ArrowRight'?1:-1)+ks.length)%ks.length]);}
+    return;
+  }
   if(e.repeat) return;
   switch(e.code){
     case 'KeyZ': ensureAudio(); setParam('chords','octave',S.chords.octave-1); break;
     case 'KeyX': ensureAudio(); setParam('chords','octave',S.chords.octave+1); break;
-    case 'KeyN': ensureAudio(); setParam('notes','octave',S.notes.octave-1); renderPadLabels(); break;
-    case 'KeyM': ensureAudio(); setParam('notes','octave',S.notes.octave+1); renderPadLabels(); break;
+    case 'Comma': ensureAudio(); setParam('notes','octave',S.notes.octave-1); renderPadLabels(); break;
+    case 'Period': ensureAudio(); setParam('notes','octave',S.notes.octave+1); renderPadLabels(); break;
     case 'Minus': ensureAudio(); setRoot(S.root-1); break;
     case 'Equal': ensureAudio(); setRoot(S.root+1); break;
     case 'Digit1': e.preventDefault(); transport('rec'); break;
     case 'Space': e.preventDefault(); spaceRecord(); break;
     case 'Enter': case 'NumpadEnter': e.preventDefault(); transport('play'); break;
     case 'Digit2': e.preventDefault(); transport('mult'); break;
+    case 'Backspace': e.preventDefault(); ensureAudio(); bsHold.down(); break;
     case 'Digit3': e.preventDefault(); transport('undo'); break;
     case 'KeyT': transport('tap'); break;
+    case 'Delete': e.preventDefault(); toggleMetro(); break;
     case 'Digit0': ensureAudio(); clearHold.start(); break;
     case 'Backquote': cycleArp(); break;
     case 'Backslash': ensureAudio(); setRightMode(S.rightMode==='drums'?'notes':'drums'); break;
@@ -1639,9 +1658,16 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>{
   const m=KEYMAP[e.code]; if(m){padUp(m[0],m[1]); return;}
   if(e.code==='Digit0') clearHold.cancel();
-  if(arrows.delete(e.code)) arrowStick();
+  if(e.code==='Backspace') bsHold.up();
 });
-window.addEventListener('blur',()=>{allUp(); arrows.clear(); arrowStick();});
+window.addEventListener('blur',()=>{allUp(); bsHold.reset();});
+// Backspace: tap = undo, long hold = clear (the clear countdown starts once it's clearly a hold)
+const bsHold={
+  timer:0,held:false,
+  down(){this.reset(); this.timer=setTimeout(()=>{this.timer=0; this.held=true; clearHold.start();},250);},
+  up(){if(this.timer){this.reset(); transport('undo');} else if(this.held){this.held=false; clearHold.cancel();}},
+  reset(){if(this.timer){clearTimeout(this.timer); this.timer=0;} if(this.held){this.held=false; clearHold.cancel();}}
+};
 
 /* gamepad */
 const gpLatch={L:false,R:false};
@@ -1656,51 +1682,6 @@ function pollGamepad(){
       if(on){gpLatch[side]=true; setStick(side,x,y);} else if(gpLatch[side]){gpLatch[side]=false; setStick(side,0,0);}
     }
     break;
-  }
-}
-
-/* =================== pet =================== */
-const pet={
-  xp:0,level:0,collected:[0],
-  load(){Object.assign(this,store.get('gammaweb-ui.pet',{}));},
-  save(){store.set('gammaweb-ui.pet',{xp:this.xp,level:this.level,collected:this.collected});},
-  variant(l){return (l*17)%40;},
-  gain(n){
-    this.xp+=n;
-    const lvl=Math.floor(Math.sqrt(this.xp/8));
-    if(lvl>this.level){
-      this.level=lvl; const v=this.variant(lvl);
-      if(!this.collected.includes(v)){this.collected.push(v); renderPetCollection();}
-      flash(`LEVEL UP! LV ${lvl}`,2200);
-    }
-    if(this.xp%10===0) this.save();
-    renderPetInfo();
-  }
-};
-function petPixels(v,blink){
-  const on=new Set(),holes=new Set(),k=(x,y)=>x+','+y;
-  for(let y=0;y<16;y++)for(let x=0;x<16;x++){const dx=(x-7.5)/6.3,dy=(y-10)/5.3;if(dx*dx+dy*dy<=1)on.add(k(x,y));}
-  const sym=(set,pts)=>pts.forEach(([x,y])=>{set.add(k(x,y));set.add(k(15-x,y));});
-  const ears=v%5,eyes=Math.floor(v/5)%4,mouth=Math.floor(v/20)%2;
-  const EARS=[[],[[3,2],[3,3],[4,3],[3,4],[4,4],[5,4]],[[4,0],[4,1],[4,2],[4,3],[5,1],[5,2],[5,3],[5,4]],[[5,4],[4,3],[3,2],[2,1],[3,1],[2,2]],[[2,5],[1,4],[1,3],[2,4],[0,2]]];
-  sym(on,EARS[ears]);
-  const EYES=[[[5,9]],[[4,8],[5,8],[4,9],[5,9]],[[4,9],[5,9],[6,9]],[[4,9],[5,8],[6,9]]];
-  sym(holes,blink?[[4,9],[5,9]]:EYES[eyes]);
-  sym(holes,mouth?[[7,12],[7,13]]:[[6,12],[7,13]]);
-  if(v>=10&&v%3===0) sym(holes,[[3,11]]);
-  return {on,holes};
-}
-function drawPet(g,ox,oy,s,v,blink){
-  const {on,holes}=petPixels(v,blink);
-  on.forEach(key=>{if(holes.has(key)) return;const [x,y]=key.split(',').map(Number);g.fillRect(ox+x*s,oy+y*s,s,s);});
-}
-function renderPetInfo(){$('#petInfo').textContent=`Level ${pet.level} · ${pet.xp} XP · collected ${pet.collected.length}/40 forms. Play to level up — each level unlocks a form.`;}
-function renderPetCollection(){
-  const host=$('#pets'); host.innerHTML='';
-  for(let v=0;v<40;v++){
-    const c=document.createElement('canvas'); c.width=18; c.height=18; const g=c.getContext('2d');
-    g.fillStyle=pet.collected.includes(v)?'#dffcff':'#1d2024'; drawPet(g,1,1,1,v,false);
-    c.title=pet.collected.includes(v)?`Form #${v+1}`:'Locked'; host.appendChild(c);
   }
 }
 
@@ -1727,7 +1708,7 @@ function drawOled(){
     g.textAlign='right'; g.fillText(right,127,1); g.textAlign='left';
   }
   for(let x=0;x<128;x+=2) g.fillRect(x,9,1,1);
-  if(S.screen==='scope') drawScope(g); else if(S.screen==='spectrum') drawSpectrum(g); else if(S.screen==='pet') drawPetScreen(g,now); else drawLoopPage(g,now);
+  if(S.screen==='scope') drawScope(g); else if(S.screen==='spectrum') drawSpectrum(g); else drawLoopPage(g,now);
   if(S.screen!=='loop'&&(looper.hasLoop||looper.state==='rec')) drawMiniBar(g);
   const flashing=now<flashUntil;
   let msg=flashing?flashMsg:lastPlayed;
@@ -1758,19 +1739,6 @@ function drawSpectrum(g){
     let m=0; for(let j=a;j<b;j++) m=Math.max(m,freqBuf[j]);
     const h=Math.round(m/255*42); g.fillRect(i*4,53-h,3,h);
   }
-}
-function drawPetScreen(g,now){
-  const happy=now-lastActivity<400, bob=happy?-Math.abs(Math.sin(now/90))*4:Math.sin(now/500)*1.2;
-  const blink=(now%3200)<140, v=pet.variant(pet.level);
-  drawPet(g,4,16+bob,2,v,blink);
-  if(happy){for(let i=0;i<3;i++){const a=now/200+i*2.1;g.fillRect(20+Math.cos(a)*20|0,28+Math.sin(a)*14|0,2,2);}}
-  g.font='bold 7px ui-monospace,Consolas,monospace';
-  g.fillText(`LV ${pet.level}`,46,16);
-  g.fillText(`FORM ${v+1}/40`,46,26);
-  const cur=8*pet.level*pet.level,next=8*(pet.level+1)*(pet.level+1),pct=(pet.xp-cur)/(next-cur);
-  g.fillRect(46,38,78,1); g.fillRect(46,44,78,1); g.fillRect(46,38,1,7); g.fillRect(123,38,1,7);
-  g.fillRect(48,40,Math.round(74*clamp(pct,0,1)),3);
-  g.fillText(`${pet.collected.length} FOUND`,46,47);
 }
 
 /* =================== panel UI =================== */
@@ -1825,7 +1793,7 @@ const HELP={
   dcutoff:['Drum cutoff','A low-pass filter on the whole kit. Turn it down for muffled, filtered builds. Also on the right-hand knob in drum mode.'],
   dresonance:['Drum resonance','Adds a peak at the drum filter\'s cutoff for squelchy sweeps.'],
   dreverb:['Drum reverb (send)','How much of the kit goes into the shared reverb.'],
-  loops:['Saved loops','Save the current loop (all its layers, tempo and key, plus the sounds and mix) to a slot, and load it back any time. Loading while a loop is playing starts the new one right away. Export / Import backs your loops up to a file.'],
+  loops:['Saved loops','Save new track stores the current loop (all its layers, tempo and key, plus the sounds and mix) under a name, and you can load it back any time. Loading while a loop is playing starts the new one right away. Export / Import backs your loops up to a file.'],
   pads:['Pads','Each drum\'s own level (0–200%), a preview button, and Load to put your own audio file on that pad (or drop a file onto the pad itself). ✕ goes back to the built-in sound.']
 };
 const info=k=>HELP[k]?`<button type="button" class="info" data-help="${k}" aria-label="About ${HELP[k][0]}">i</button>`:'';
@@ -1848,28 +1816,45 @@ document.addEventListener('click',e=>{
 });
 window.addEventListener('resize',hideHelp);
 
+const BASIC=new Set(['volume','octave','attack','release','cutoff','resonance','reverb','delay']);   // what Basic mode shows
+function applyUiMode(){
+  document.body.classList.toggle('ui-basic',S.ui!=='advanced');
+  $$('#segUi button').forEach(b=>b.classList.toggle('active',b.dataset.v===(S.ui==='advanced'?'advanced':'basic')));
+  $('#uiHint').textContent=S.ui==='advanced'?'Click a section title to fold it away.':'The essentials. Advanced shows everything.';
+  $$('.grp[data-g]').forEach(g=>g.classList.toggle('collapsed',!!S.collapsed[g.dataset.g]));
+}
+function setupUiMode(){
+  $$('#segUi button').forEach(b=>b.onclick=()=>{S.ui=b.dataset.v; applyUiMode(); saveState();});
+  document.addEventListener('click',e=>{
+    const n=e.target.closest('.grp[data-g]>.gname'); if(!n||e.target.closest('.info')) return;
+    const g=n.parentElement.dataset.g; S.collapsed[g]=!S.collapsed[g]; if(!S.collapsed[g]) delete S.collapsed[g];
+    applyUiMode(); saveState();
+  });
+  applyUiMode();
+}
 function buildEngineCard(en){
   const el=$('#card-'+en),isC=en==='chords';
   let h=`<h3><span class="dot ${isC?'':'n'}"></span>${isC?'Chords':'Notes'} engine <span class="tag">${isC?'left hand · 4 voices':'right hand · mono / poly'}</span></h3>`;
   h+=`<div class="gname">Waveform${info('wave')}</div>`;
   h+=`<div class="waves">${WAVES.map(([id,l])=>`<button data-en="${en}" data-wave="${id}">${l}</button>`).join('')}</div>`;
-  h+=`<div class="row"><div class="seg" data-en="${en}" data-seg="filterType"><button data-v="lowpass">Low-pass</button><button data-v="highpass">High-pass</button></div>${info('filterType')}`+
+  h+=`<div class="row adv"><div class="seg" data-en="${en}" data-seg="filterType"><button data-v="lowpass">Low-pass</button><button data-v="highpass">High-pass</button></div>${info('filterType')}`+
      `<label class="chk" style="margin-left:10px"><input type="checkbox" data-en="${en}" data-chk="moog"> Moog 24dB</label>${info('moog')}</div>`;
   for(const [gname,ids] of GROUPS){
     if(gname==='Arpeggiator'&&!isC) continue;
-    h+=`<div class="grp${['Filter','Color','Arpeggiator'].includes(gname)?' sect':''}"><div class="gname">${gname}${info({'Filter arp':'farp','Arpeggiator':'arp'}[gname])}</div>`;
+    const basicGrp=ids.some(id=>BASIC.has(id));
+    h+=`<div class="grp${['Filter','Color','Arpeggiator'].includes(gname)?' sect':''}${basicGrp?'':' adv'}" data-g="${en}:${gname}"><div class="gname"><span class="chev">▾</span>${gname}${info({'Filter arp':'farp','Arpeggiator':'arp'}[gname])}</div>`;
     if(gname==='Filter arp') h+=`<div class="row"><div class="seg" data-en="${en}" data-seg="farp">${Object.entries(FARP_PATTERNS).map(([k,v])=>`<button data-v="${k}">${v}</button>`).join('')}</div></div>`+
       `<div class="row"><label style="display:flex;align-items:center">Trigger${info('farpTrig')}</label><div class="seg" data-en="${en}" data-seg="farpTrig"><button data-v="tempo">Tempo (loops)</button><button data-v="note">Note (auto-wah)</button></div></div>`+
       `<div class="small" style="margin:-2px 0 4px">Note: every new note restarts the sweep once (Steps × Rate long), then holds. Down = classic wah, Up = swell, Up-down = open then close.</div>`;
     if(gname==='Arpeggiator') h+=`<div class="row"><div class="seg" data-en="${en}" data-seg="arp">${Object.entries(ARP_PATTERNS).map(([k,v])=>`<button data-v="${k}">${k==='off'?'Off':v.replace(/^\S+ /,'').replace('RAND','Random').replace('UP','Up').replace('DOWN','Down')}</button>`).join('')}</div></div>`;
     for(const id of ids){
       if(id==='glide'&&isC) continue;
-      h+=`<div class="sl"><label>${PARAMS[id].label}${info(id)}</label><input type="range" min="0" max="1000" data-en="${en}" data-pid="${id}"><output data-en="${en}" data-out="${id}"></output></div>`;
+      h+=`<div class="sl${BASIC.has(id)?'':' adv'}"><label>${PARAMS[id].label}${info(id)}</label><input type="range" min="0" max="1000" data-en="${en}" data-pid="${id}"><output data-en="${en}" data-out="${id}"></output></div>`;
     }
     h+='</div>';
   }
   const opts=Object.keys(PARAMS).filter(p=>isC||!p.startsWith('arp')).map(p=>`<option value="${p}">${PARAMS[p].label}</option>`).join('');
-  h+=`<div class="grp${isC?'':' sect'}"><div class="gname">Hardware knobs${info('knobs')}</div>`;   // notes has no arpeggiator: close its last section here
+  h+=`<div class="grp adv${isC?'':' sect'}" data-g="${en}:knobs"><div class="gname"><span class="chev">▾</span>Hardware knobs${info('knobs')}</div>`;   // notes has no arpeggiator: close its last section here
   for(const k of [1,2]) h+=`<div class="row"><label>Knob ${k}</label><select data-knobsel="${en[0]}${k}">${opts}</select></div>`;
   h+='</div>';
   el.innerHTML=h;
@@ -1948,14 +1933,14 @@ function buildPanel(){
   $('#delayFb').oninput=e=>{S.delayFb=e.target.value/1000; updateDelay(); $('#delayFbOut').textContent=Math.round(S.delayFb*100)+'%'; saveState();};
   $('#revSize').oninput=e=>{S.revSize=e.target.value/1000; $('#revSizeOut').textContent=Math.round(S.revSize*100)+'%'; saveState();};
   $('#revSize').onchange=()=>{if(ctx) reverb.buffer=makeIR(S.revSize);};
-  $('#btnMetro').onclick=()=>{ensureAudio(); looper.metro=!looper.metro; if(looper.metro&&!looper.playing) looper.startClock(); updateTransport();};
+  $('#btnMetro').onclick=toggleMetro;
   $('#selFactory').onchange=e=>{if(e.target.value!==''){ensureAudio(); loadFactory(+e.target.value);}};
   $('#btnSaveMode').onclick=()=>{saveMode=!saveMode; renderSlots();};
   $('#btnMidi').onclick=enableMidi;
   $('#selMidiIn').onchange=bindMidiIn;
   $('#selMidiOut').onchange=e=>{midi.out=midi.access?midi.access.outputs.get(e.target.value)||null:null;};
   $('#chkThru').onchange=e=>{midi.thru=e.target.checked;};
-  oledCv.addEventListener('click',()=>{ensureAudio(); const m=['scope','spectrum','pet','loop']; S.screen=m[(m.indexOf(S.screen)+1)%m.length]; looper.prevScreen=null; syncGlobalUI(); saveState();});
+  oledCv.addEventListener('click',()=>{ensureAudio(); const m=['scope','spectrum','loop']; S.screen=m[(m.indexOf(S.screen)+1)%m.length]; looper.prevScreen=null; syncGlobalUI(); saveState();});
 }
 
 /* looper controls */
@@ -1964,6 +1949,7 @@ function spaceRecord(){   // Space = record on/off: like REC, except a second pr
   if(looper.state==='armed'){looper.state='empty'; looper.taps=[]; restoreScreen(); flash('DISARMED'); updateTransport(); return;}
   transport('rec');
 }
+function toggleMetro(){ensureAudio(); looper.metro=!looper.metro; if(looper.metro&&!looper.playing) looper.startClock(); updateTransport(); flash(looper.metro?'METRONOME ON':'METRONOME OFF');}
 function transport(t){
   ensureAudio();
   ({rec:()=>looper.recPress(),play:()=>looper.playPress(),mult:()=>looper.multiply(),undo:()=>looper.undo(),tap:()=>looper.tapPress()})[t]();
@@ -1975,7 +1961,7 @@ const clearHold={
     if(this.timer) return;
     if(looper.state==='empty'&&looper.bars===1){flash('NOTHING TO CLEAR'); return;}
     this.t0=performance.now(); flash('HOLD TO CLEAR…',800);
-    this.timer=setTimeout(()=>{this.timer=0; looper.clear(); flash('LOOP CLEARED'); updateTransport();},700);
+    this.timer=setTimeout(()=>{this.timer=0; looper.clear(); currentLoopName=null; flash('LOOP CLEARED'); updateTransport();},700);
     this.anim();
   },
   anim(){
@@ -1995,14 +1981,6 @@ function setupTransport(){
     const up=()=>{el.classList.remove('down'); if(t==='clear') clearHold.cancel();};
     el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
   });
-  $('#btnRec').onclick=()=>transport('rec');
-  $('#btnPlay').onclick=()=>transport('play');
-  $('#btnMult').onclick=()=>transport('mult');
-  $('#btnUndo').onclick=()=>transport('undo');
-  $('#btnTap').onclick=()=>transport('tap');
-  const bc=$('#btnClear');
-  bc.addEventListener('pointerdown',()=>{ensureAudio(); clearHold.start();});
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>bc.addEventListener(ev,()=>clearHold.cancel()));
 }
 function setLed(t,color,opts={}){
   const el=document.querySelector(`.tbtn[data-t="${t}"]`); if(!el) return;
@@ -2022,13 +2000,6 @@ function updateTransport(){
   setLed('tap',canTap?(looper.freeLoop&&st==='play'?'#39e07a':DIM):null,{lit:false});
   $$('#segLoopMode button').forEach(b=>b.classList.toggle('active',b.dataset.v===S.loopMode));
   $('#hwPlayGlyph').textContent=looper.playing?'■':'▶';
-  const rb=$('#btnRec');
-  rb.textContent={empty:'● Rec',armed:'● Armed · tap for tempo',rec:'● Stop recording',play:'● Overdub',dub:'● End overdub',stop:'● Overdub'}[st];
-  rb.classList.toggle('armed',st==='armed'||st==='rec'); rb.classList.toggle('dub',st==='dub');
-  $('#btnPlay').textContent=looper.playing?'■ Stop':'▶ Play';
-  $('#btnPlay').classList.toggle('active',looper.playing);
-  $('#btnMult').disabled=looper.hasLoop?looper.bars*2>MAX_BARS:looper.bars>=MAX_BARS;
-  $('#btnUndo').disabled=!canUndo;
   $('#btnMetro').classList.toggle('active',looper.metro);
   $('#loopLen').textContent=`${looper.bars} bar${looper.bars>1?'s':''}`+(looper.hasLoop?` · phrase ${looper.phrase} bar${looper.phrase>1?'s':''}`:st==='rec'?' · recording…':'');
 }
@@ -2229,22 +2200,46 @@ const FACTORY=[
  ['Highpass Air',{c:{wave:'supersaw',filterType:'highpass',cutoff:900,resonance:4,attack:0.3,release:1.5,reverb:0.6},n:{wave:'sawtooth',filterType:'highpass',cutoff:700,delay:0.35,reverb:0.4}}],
  ['Kalimba',{c:{wave:'sine',fm:0.2,fmRatio:5,decay:0.35,sustain:0,release:0.4,reverb:0.3},n:{wave:'sine',fm:0.25,fmRatio:5,decay:0.3,sustain:0,release:0.35,delay:0.25,reverb:0.3},g:{noteMode:'poly'}}],
  ['Everything Dial',{c:{wave:'hollow',drive:0.3,fold:0.3,crush:0.2,chorus:0.6,tremolo:0.3,reverb:0.5,delay:0.3,cutoff:4000,resonance:6},n:{wave:'supersaw',fm:0.2,fmRatio:2,vibrato:0.2,delay:0.4,reverb:0.4,glide:0.05}}],
+ // d: optional drum settings, for presets that are a whole style (kit + tone); presets without it leave the drums alone
+ ['Boom Bap 90s',{c:{wave:'triangle',attack:0.003,decay:0.9,sustain:0.12,release:0.35,cutoff:2200,crush:0.3,chorus:0.25,detune:6,reverb:0.18},
+   n:{wave:'sine',octave:-2,attack:0.004,decay:0.5,sustain:0.25,release:0.12,cutoff:900,drive:0.25,subOct:0.2,reverb:0,delay:0},
+   d:{kit:'lofi',volume:1.4,tune:-1,decay:0.8,cutoff:9000,resonance:0,reverb:0.06},g:{noteMode:'mono'}}],
+ ['G-Funk Whistle',{c:{wave:'sine',fm:0.12,fmRatio:1,decay:1.2,sustain:0.35,release:0.6,tremolo:0.25,tremRate:4.5,chorus:0.4,reverb:0.25},
+   n:{wave:'sine',octave:1,attack:0.03,sustain:0.9,release:0.3,glide:0.14,vibrato:0.3,vibRate:5.5,cutoff:6000,reverb:0.25,delay:0.2},
+   d:{kit:'808',volume:1.3,tune:0,decay:1,cutoff:14000,resonance:0,reverb:0.08},g:{noteMode:'mono'}}],
+ ['Dirty South 808',{c:{wave:'sawtooth',attack:0.004,decay:0.3,sustain:0.45,release:0.12,cutoff:3200,resonance:3,drive:0.35,octUp:0.3,detune:10},
+   n:{wave:'sine',octave:-2,attack:0.003,decay:1.4,sustain:0.6,release:0.4,glide:0.09,drive:0.5,cutoff:1400,reverb:0,delay:0},
+   d:{kit:'808',volume:1.5,tune:-2,decay:1,cutoff:18000,resonance:0,reverb:0.05},g:{noteMode:'mono'}}],
+ ['Y2K Pizzicato',{c:{wave:'sawtooth',attack:0.002,decay:0.22,sustain:0,release:0.18,cutoff:2800,resonance:2,chorus:0.35,detune:12,reverb:0.25},
+   n:{wave:'sine',fm:0.3,fmRatio:2,octave:1,attack:0.002,decay:0.35,sustain:0,release:0.3,cutoff:9000,delay:0.25,reverb:0.2},
+   d:{kit:'808',volume:1.3,tune:1,decay:0.6,cutoff:16000,resonance:0,reverb:0.04},g:{noteMode:'poly',delayDiv:'1/8'}}],
+ ['Guitar Solo',{c:{wave:'square',drive:0.75,cutoff:2400,resonance:2,attack:0.003,decay:0.5,sustain:0.6,release:0.15,fifth:0.5,chorus:0.15},
+   n:{wave:'sawtooth',drive:0.9,fold:0.12,cutoff:3200,resonance:3,attack:0.003,decay:0.4,sustain:0.75,release:0.25,glide:0.03,
+      vibrato:0.22,vibRate:5.5,detune:6,delay:0.3,reverb:0.3},g:{noteMode:'mono',delayDiv:'1/8.',delayFb:0.35}}],
+ ['Plucky Bass',{c:{wave:'pulse',attack:0.002,decay:0.3,sustain:0.1,release:0.12,cutoff:900,resonance:7,farp:'down',farpTrig:'note',farpRate:5,farpDepth:2.4,farpSteps:4,farpSmooth:0.3,reverb:0.12},
+   n:{wave:'sawtooth',moog:true,octave:-2,attack:0.002,decay:0.18,sustain:0.15,release:0.08,cutoff:450,resonance:9,drive:0.3,subOct:0.3,
+      farp:'down',farpTrig:'note',farpRate:5,farpDepth:2.2,farpSteps:4,farpSmooth:0.35,reverb:0,delay:0},g:{noteMode:'mono'}}],
+ ['Funk Clav',{c:{wave:'pulse',cutoff:650,resonance:9,farp:'down',farpTrig:'note',farpRate:5,farpDepth:2.6,farpSteps:4,farpSmooth:0.3,attack:0.002,decay:0.18,sustain:0.25,release:0.06,drive:0.25,chorus:0.1,detune:4,reverb:0.08},
+   n:{wave:'sawtooth',moog:true,octave:-1,cutoff:850,resonance:6,farp:'down',farpTrig:'note',farpRate:5,farpDepth:1.6,farpSteps:3,farpSmooth:0.35,attack:0.002,decay:0.16,sustain:0.35,release:0.05,subOct:0.35,drive:0.35,reverb:0,delay:0},
+   d:{kit:'acoustic',volume:1.3,tune:0,decay:0.7,cutoff:12000,resonance:0,reverb:0.08},g:{noteMode:'mono',delayDiv:'1/16',delayFb:0.2,revSize:0.35}}],
 ];
 const PRESET_GLOBALS=['noteMode','delayDiv','delayFb','revSize'];
-function applyPreset(name,c,n,g){
+function applyPreset(name,c,n,g,d){
   panic();
   const keepArp={}; ARP_KEYS.forEach(k=>keepArp[k]=S.chords[k]);   // the arp is a performance setting, not part of the sound
   S.chords={...defaultEngine(),...keepArp,...c}; S.notes={...defaultEngine(),...n};
   const base=DEFAULT_STATE(); PRESET_GLOBALS.forEach(k=>S[k]=(g&&g[k]!==undefined)?g[k]:base[k]);
-  if(ctx){engines.chords.applyAll(true); engines.notes.applyAll(true); updateDelay(); reverb.buffer=makeIR(S.revSize);}
+  if(d) S.drums={...S.drums,...d};   // per-pad levels stay as you set them
+  if(ctx){engines.chords.applyAll(true); engines.notes.applyAll(true); if(d) engines.drums.apply(); updateDelay(); reverb.buffer=makeIR(S.revSize);}
+  if(d) renderPadLabels();
   syncAll(); flash(name.toUpperCase(),1800); saveState();
 }
-function loadFactory(i){const [name,p]=FACTORY[i]; applyPreset(name,p.c,p.n,p.g);}
+function loadFactory(i){const [name,p]=FACTORY[i]; applyPreset(name,p.c,p.n,p.g,p.d);}
 /* =================== saved loops =================== */
-const LOOP_SLOTS=20;
+let currentLoopName=null;   // name of the loop that was last saved or loaded (used for the MP3 file name)
 let loopSlots=store.get('gammaweb-ui.loops',null);
-if(!Array.isArray(loopSlots)||loopSlots.length!==LOOP_SLOTS) loopSlots=new Array(LOOP_SLOTS).fill(null);
-let loopMode=null;   // null | 'save' | 'delete'
+loopSlots=Array.isArray(loopSlots)?loopSlots.filter(Boolean):[];   // a list that grows with each track (older saves padded it with empty slots)
+let loopMode=null;   // null | 'delete'
 function persistLoops(){
   try{localStorage.setItem('gammaweb-ui.loops',JSON.stringify(loopSlots)); return true;}
   catch(e){alert('Could not save: browser storage is full. Delete a loop or use Export all to back them up.'); return false;}
@@ -2282,40 +2277,47 @@ function loadLoop(L){
   looper.freeLoop=false; looper.lastPos=0; looper.state='stop';
   if(wasPlaying){looper.startClock(); looper.state='play'; followScreen();}   // live: switch straight to the new loop
   syncAll(); updateDelay(); updateTransport();
-  flash(`LOADED ${L.name.toUpperCase()}`,1800); saveState();
+  currentLoopName=L.name; flash(`LOADED ${L.name.toUpperCase()}`,1800); saveState();
 }
 const loopInfo=L=>`${L.bars} bar${L.bars>1?'s':''} · ${fmtBpm(L.bpm)} · ${NOTE_NAMES[L.root]} ${(SCALE_ABBR[L.scale]||'').toLowerCase()}`;
+function saveNewTrack(){
+  if(!looper.hasLoop){flash('RECORD A LOOP FIRST'); alert('Record a loop first, then save it as a new track.'); return;}
+  const name=(prompt('Track name:',`Track ${loopSlots.length+1}`)||'').trim(); if(!name) return;
+  const i=loopSlots.findIndex(L=>L.name.toLowerCase()===name.toLowerCase());
+  if(i>=0&&!confirm(`You already have a track called "${loopSlots[i].name}". Replace it?`)) return;
+  const prev=[...loopSlots], snap=snapshotLoop(name);
+  if(i>=0) loopSlots[i]=snap; else loopSlots.push(snap);
+  if(!persistLoops()){loopSlots=prev; return;}
+  currentLoopName=name; renderLoopSlots(); flash('SAVED '+name.toUpperCase());
+}
 function renderLoopSlots(){
   const host=$('#loopSlots'); host.innerHTML='';
-  host.classList.toggle('saving',loopMode==='save'); host.classList.toggle('deleting',loopMode==='delete');
-  $('#btnLoopSave').classList.toggle('active',loopMode==='save'); $('#btnLoopDel').classList.toggle('active',loopMode==='delete');
-  $('#loopHint').textContent=loopMode==='save'?'Click a slot to save the current loop':loopMode==='delete'?'Click a loop to delete it':'';
+  host.classList.toggle('deleting',loopMode==='delete');
+  $('#btnLoopDel').classList.toggle('active',loopMode==='delete');
+  $('#loopHint').textContent=loopMode==='delete'?'Click a track to delete it':'';
   $('#chkLoopSound').checked=S.loopSound!==false;
   loopSlots.forEach((L,i)=>{
     const b=document.createElement('button');
-    if(L){b.innerHTML=`${i+1} · ${L.name.replace(/</g,'&lt;')}<span class="ls">${loopInfo(L)}</span>`; b.title=`${L.name} — ${loopInfo(L)}`;}
-    else{b.innerHTML=`${i+1} · empty<span class="ls">&nbsp;</span>`; b.classList.add('empty');}
+    b.innerHTML=`${L.name.replace(/</g,'&lt;')}<span class="ls">${loopInfo(L)}</span>`; b.title=`${L.name} — ${loopInfo(L)}`;
     b.onclick=()=>{
-      if(loopMode==='save'){
-        if(!looper.hasLoop){flash('RECORD A LOOP FIRST'); alert('Record a loop first, then save it to a slot.'); return;}
-        const name=(prompt(L?`Replace "${L.name}" with the current loop. Name:`:'Loop name:',L?L.name:`Loop ${i+1}`)||'').trim(); if(!name) return;
-        const prev=loopSlots[i]; loopSlots[i]=snapshotLoop(name);
-        if(!persistLoops()){loopSlots[i]=prev; return;}
-        loopMode=null; renderLoopSlots(); flash('SAVED '+name.toUpperCase());
-      }else if(loopMode==='delete'){
-        if(L&&confirm(`Delete "${L.name}"?`)){loopSlots[i]=null; persistLoops(); flash('DELETED '+L.name.toUpperCase());}
+      if(loopMode==='delete'){
+        if(confirm(`Delete "${L.name}"?`)){loopSlots.splice(i,1); persistLoops(); flash('DELETED '+L.name.toUpperCase());}
         loopMode=null; renderLoopSlots();
-      }else if(L) loadLoop(L);
+      }else loadLoop(L);
     };
     host.appendChild(b);
   });
+  if(loopMode!=='delete'){   // always the last tile
+    const add=document.createElement('button'); add.className='add'; add.id='btnNewTrack';
+    add.innerHTML='+ Save new track<span class="ls">&nbsp;</span>'; add.onclick=saveNewTrack;
+    host.appendChild(add);
+  }
 }
 function setupLoops(){
-  $('#btnLoopSave').onclick=()=>{loopMode=loopMode==='save'?null:'save'; renderLoopSlots();};
   $('#btnLoopDel').onclick=()=>{loopMode=loopMode==='delete'?null:'delete'; renderLoopSlots();};
   $('#chkLoopSound').onchange=e=>{S.loopSound=e.target.checked; saveState();};
   $('#btnLoopExport').onclick=()=>{
-    const data=loopSlots.filter(Boolean); if(!data.length){alert('No saved loops to export yet.'); return;}
+    const data=loopSlots; if(!data.length){alert('No saved loops to export yet.'); return;}
     const blob=new Blob([JSON.stringify({sigmaLoops:1,exported:new Date().toISOString(),loops:data},null,1)],{type:'application/json'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`sigma-loops-${new Date().toISOString().slice(0,10)}.json`;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
@@ -2327,9 +2329,10 @@ function setupLoops(){
       const d=JSON.parse(await f.text()), list=Array.isArray(d)?d:(d&&d.loops);
       const ok=(list||[]).filter(L=>L&&typeof L.name==='string'&&Array.isArray(L.events)&&L.bars>0&&L.bpm>0);
       if(!ok.length){alert('No Sigma loops found in that file.'); return;}
-      let added=0; for(const L of ok){const i=loopSlots.indexOf(null); if(i<0) break; loopSlots[i]=L; added++;}
-      persistLoops(); renderLoopSlots();
-      alert(`Imported ${added} loop${added===1?'':'s'}`+(added<ok.length?` (${ok.length-added} skipped: no empty slots left).`:'.'));
+      const prev=[...loopSlots]; loopSlots.push(...ok);
+      if(!persistLoops()){loopSlots=prev; return;}
+      renderLoopSlots();
+      alert(`Imported ${ok.length} track${ok.length===1?'':'s'}.`);
     }catch(err){alert('That file could not be read as Sigma loops.');}
   };
   renderLoopSlots();
@@ -2339,10 +2342,13 @@ let userSlots=store.get('gammaweb-ui.user',new Array(20).fill(null)), saveMode=f
 function renderSlots(){
   const host=$('#slots'); host.innerHTML=''; host.classList.toggle('saving',saveMode);
   $('#btnSaveMode').classList.toggle('active',saveMode);
-  $('#saveHint').textContent=saveMode?'Click a slot to save the current sound':'';
+  $('#saveHint').textContent=saveMode?(userSlots.includes(null)?'Click + New sound, or a sound to replace it':'All 20 slots are full: click a sound to replace it'):'';
+  const firstFree=userSlots.indexOf(null);
+  if(!userSlots.some(Boolean)&&!saveMode) host.innerHTML='<p class="small none">No saved sounds yet. Dial one in, then press Save sound.</p>';
   userSlots.forEach((s,i)=>{
-    const b=document.createElement('button'); b.textContent=s?`${i+1} · ${s.name}`:`${i+1} · empty`; if(!s) b.classList.add('empty');
-    b.title=s?s.name:'Empty slot';
+    if(!s&&!(saveMode&&i===firstFree)) return;
+    const b=document.createElement('button'); b.textContent=s?s.name:'+ New sound'; if(!s) b.classList.add('add');
+    b.title=s?s.name:'Save into a new slot';
     b.onclick=()=>{
       if(saveMode){
         const name=(prompt('Preset name:',s?s.name:`User ${i+1}`)||'').trim(); if(!name) return;
@@ -2354,6 +2360,85 @@ function renderSlots(){
     host.appendChild(b);
   });
 }
+
+/* =================== export the loop as MP3 =================== */
+let exporting=null;
+function loadLame(){
+  if(window.lamejs) return Promise.resolve();
+  return new Promise((ok,fail)=>{const sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js'; sc.onload=ok; sc.onerror=()=>{sc.remove(); fail(new Error('offline'));}; document.head.appendChild(sc);});
+}
+// play the loop from the top and capture the master output (post limiter, no metronome) for `passes` loops + a faded tail
+let tapReady=null;
+function makeTap(chunks){   // sample-accurate capture node: every 128-frame block arrives stamped with its exact context time
+  tapReady??=ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([
+    "registerProcessor('sigma-tap',class extends AudioWorkletProcessor{process(inp){const i=inp[0];if(i&&i.length)this.port.postMessage([currentTime,i[0].slice(),(i[1]||i[0]).slice()]);return true;}})"
+  ],{type:'text/javascript'})));
+  return tapReady.then(()=>{
+    const n=new AudioWorkletNode(ctx,'sigma-tap',{numberOfInputs:1,numberOfOutputs:0,channelCount:2,channelCountMode:'explicit'});
+    n.port.onmessage=e=>chunks.push(e.data);
+    return n;
+  });
+}
+async function captureLoop(onProgress){
+  const chunks=[], tap=await makeTap(chunks);
+  analyser.connect(tap);
+  return new Promise(resolve=>{
+    const sr=ctx.sampleRate, loopSec=looper.bars*4*looper.beat, passes=clamp(Math.ceil(16/loopSec),2,8), tail=Math.min(4*looper.beat,3);
+    const total=passes*loopSec+tail, N=Math.round(total*sr), L=new Float32Array(N), R=new Float32Array(N);
+    if(looper.playing) looper.playPress();
+    looper.playPress(); updateTransport();
+    const T0=looper.start, job={cancelled:false};
+    const finish=()=>{
+      clearInterval(timer); if(looper.playing) looper.playPress(); updateTransport();
+      analyser.disconnect(tap); tap.port.onmessage=null; tap.port.close();
+      if(job.cancelled){resolve(null); return;}
+      for(const [t,l,r] of chunks){
+        const o=Math.round((t-T0)*sr);
+        for(let i=0;i<l.length;i++){const k=o+i; if(k>=0&&k<N){L[k]=l[i]; R[k]=r[i];}}
+      }
+      const fs=Math.round((total-tail)*sr), fl=N-fs;
+      for(let k=fs;k<N;k++){const g=1-(k-fs)/fl; L[k]*=g; R[k]*=g;}   // fade out over the tail
+      resolve({L,R,sr,passes});
+    };
+    const timer=setInterval(()=>{
+      const left=T0+total+0.25-ctx.currentTime;
+      if(job.cancelled||left<=0){finish(); return;}
+      onProgress&&onProgress(Math.ceil(left));
+    },100);
+    exporting={cancel(){job.cancelled=true;}};
+  });
+}
+async function encodeMp3({L,R,sr},onProgress){   // encodes in slices and yields between them so the page stays responsive
+  const enc=new lamejs.Mp3Encoder(2,sr,192), out=[], B=1152, SLICE=B*40;
+  const toI16=(f,a,b)=>{const o=new Int16Array(b-a); for(let i=a;i<b;i++){const v=Math.max(-1,Math.min(1,f[i])); o[i-a]=v<0?v*32768:v*32767;} return o;};
+  for(let s=0;s<L.length;s+=SLICE){
+    for(let i=s;i<Math.min(L.length,s+SLICE);i+=B){const b=Math.min(L.length,i+B), d=enc.encodeBuffer(toI16(L,i,b),toI16(R,i,b)); if(d.length) out.push(new Uint8Array(d));}
+    onProgress&&onProgress(Math.min(99,Math.round((s+SLICE)/L.length*100)));
+    await new Promise(r=>setTimeout(r,0));
+  }
+  const end=enc.flush(); if(end.length) out.push(new Uint8Array(end));
+  return new Blob(out,{type:'audio/mpeg'});
+}
+async function exportMp3(){
+  const btn=$('#btnMp3');
+  if(exporting){exporting.cancel(); return;}
+  ensureAudio();
+  if(looper.state==='rec'){alert('Finish recording the loop first, then export it.'); return;}
+  if(!looper.hasLoop){alert('Record or load a loop first, then export it.'); return;}
+  btn.textContent='Loading encoder…';
+  try{await loadLame();}catch(err){btn.textContent='⤓ Export MP3'; alert('The MP3 encoder downloads the first time you export. Connect to the internet and try again.'); return;}
+  const res=await captureLoop(sec=>{btn.textContent=`■ Cancel (${sec}s)`; flash(`EXPORTING · ${sec}s`,400);});
+  exporting=null;
+  if(!res){btn.textContent='⤓ Export MP3'; flash('EXPORT CANCELLED'); return;}
+  exporting={cancel(){}};   // the button stays busy while encoding
+  const blob=await encodeMp3(res,pct=>{btn.textContent=`Encoding ${pct}%`; flash(`ENCODING MP3 · ${pct}%`,400);});
+  exporting=null;
+  const slug=(currentLoopName||'sigma loop').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'sigma-loop';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${slug}-${pcName(S.root).replace('#','s')}-${Math.round(S.bpm)}bpm.mp3`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  btn.textContent='⤓ Export MP3'; flash(`SAVED MP3 · ${res.passes}× LOOP`,2200);
+}
+function setupExport(){$('#btnMp3').onclick=exportMp3;}
 
 /* =================== MIDI =================== */
 const midi={access:null,in:null,out:null,thru:false,held:new Map()};
@@ -2421,19 +2506,20 @@ function frame(){
     const base=DEFAULT_STATE();
     S={...base,...saved,knobs:{...base.knobs,...(saved.knobs||{})},chords:{...defaultEngine(),...(saved.chords||{})},notes:{...defaultEngine(),...(saved.notes||{})}};
     if(!SCALES[S.scale]) S.scale='Major';
+    if(!['scope','spectrum','loop'].includes(S.screen)) S.screen='scope';   // the pet screen is gone
+    if(!S.collapsed||typeof S.collapsed!=='object') S.collapsed={};
     S.drums={...base.drums,...(saved.drums||{})}; if(!DRUM_KITS[S.drums.kit]) S.drums.kit='808';
     S.mix={...base.mix,...(saved.mix||{})};
     if(!(saved.knobRev>=2)){S.knobs.c2='resonance'; S.knobs.n2='resonance'; S.knobRev=2;}   // one-time move: knob 2 on each side -> resonance
   }else{
     const [,p]=FACTORY[0]; S.chords={...defaultEngine(),...p.c}; S.notes={...defaultEngine(),...p.n};
   }
-  pet.load();
-  buildPads(); buildPanel(); setupKnobs(); setupEncoder(); setupSticks(); setupTransport(); setupMix();
+  buildPads(); buildPanel(); setupUiMode(); setupKnobs(); setupEncoder(); setupSticks(); setupTransport(); setupMix();
   $('#arpSw').addEventListener('click',cycleArp);
-  syncAll(); updateTransport(); renderSlots(); setupLoops(); renderPetInfo(); renderPetCollection(); renderDrumList(); loadStoredSamples();
+  syncAll(); updateTransport(); renderSlots(); setupLoops(); setupExport(); renderDrumList(); loadStoredSamples();
   fit(); window.addEventListener('resize',fit);
   $('#power').addEventListener('pointerdown',()=>ensureAudio());
-  window.addEventListener('beforeunload',()=>{pet.save(); store.set('gammaweb-ui.state',S);});
+  window.addEventListener('beforeunload',()=>store.set('gammaweb-ui.state',S));
   requestAnimationFrame(frame);
 })();
 </script>
