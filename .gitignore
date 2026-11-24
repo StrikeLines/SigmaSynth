@@ -1,0 +1,3 @@
+# local backups the synth editing sessions leave next to index.html
+index.backup-*.html
+index.before-*.html
