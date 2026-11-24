@@ -62,13 +62,15 @@ body{background:radial-gradient(ellipse at 50% -10%,#1d2530 0%,var(--bg) 60%) fi
 .knob.drumk .klabel{color:var(--accent3)}
 .knob.bassk .ring{background:conic-gradient(from 225deg,var(--accent4) 0deg calc(var(--v)*270deg),#142640 calc(var(--v)*270deg) 270deg,transparent 270deg);filter:drop-shadow(0 0 3px rgba(76,156,255,.4))}
 .knob.bassk .klabel{color:var(--accent4)}
-.knob .cap,.encoder .cap{position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 45% 35%,#3b3d42,#0f1012 72%);box-shadow:0 5px 8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.12)}
+.knob .cap{position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 45% 35%,#3b3d42,#0f1012 72%);box-shadow:0 5px 8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.12)}
 .knob .ind{position:absolute;left:50%;top:4px;width:3px;height:14px;margin-left:-1.5px;border-radius:2px;background:#f2f2f2;transform-origin:50% 20px}
 .klabel{position:absolute;left:50%;top:66px;transform:translateX(-50%);font-size:10px;letter-spacing:.8px;color:#9aa1aa;white-space:nowrap;font-weight:600}
-.encoder{position:absolute;width:58px;height:58px;margin:-29px 0 0 -29px;touch-action:none;cursor:ns-resize}
-.encoder .cap{inset:0;background:repeating-conic-gradient(#2c2e32 0 6deg,#18191b 6deg 12deg);}
-.encoder .cap::after{content:"";position:absolute;inset:12px;border-radius:50%;background:radial-gradient(circle at 45% 35%,#d7d9dc,#8c9095 75%)}
-.encoder .ind{position:absolute;left:50%;top:13px;width:2px;height:10px;margin-left:-1px;background:#222;z-index:2;transform-origin:50% 16px}
+/* key / progression buttons over the screen */
+.kbtn{position:absolute;top:56px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:5px;
+  font-size:10px;font-weight:700;letter-spacing:.7px;color:#d5d9de;white-space:nowrap;cursor:pointer;touch-action:none;
+  background:linear-gradient(180deg,#2b2d31,#1a1b1e);box-shadow:0 4px 0 #08090a,0 7px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+.kbtn i{font-style:normal;font-size:11px;color:var(--accent)}
+.kbtn.down{transform:translateY(3px);box-shadow:0 1px 0 #08090a,0 3px 6px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
 
 .pad{position:absolute;width:76px;height:74px;border-radius:10px;
   background:linear-gradient(180deg,#2b2d31,#1a1b1e);color:#d5d9de;
@@ -109,8 +111,10 @@ body{background:radial-gradient(ellipse at 50% -10%,#1d2530 0%,var(--bg) 60%) fi
 
 
 .screen{position:absolute;left:406px;top:110px;width:188px;height:104px;border-radius:8px;background:#030303;
-  box-shadow:inset 0 0 0 2px #2d3034,0 1px 0 rgba(255,255,255,.06);padding:9px 8px}
-#oled{display:block;width:172px;height:86px;cursor:pointer;image-rendering:pixelated}
+  box-shadow:inset 0 0 0 2px #2d3034,0 1px 0 rgba(255,255,255,.06);padding:8px 10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+#lcdKey{font:700 50px/1 ui-monospace,Consolas,monospace;color:var(--oled);text-shadow:0 0 10px rgba(223,252,255,.45)}
+#lcdProg{margin-top:9px;max-width:100%;font:700 14px/1 ui-monospace,Consolas,monospace;letter-spacing:1.5px;color:var(--oled);white-space:nowrap;text-shadow:0 0 6px rgba(223,252,255,.35)}
 .brand{position:absolute;left:500px;top:222px;transform:translateX(-50%);font:700 15px/1 ui-monospace,Consolas,monospace;letter-spacing:3px;color:#cfd3d8;text-transform:lowercase}
 .brand small{display:block;text-align:center;font-size:8px;letter-spacing:2px;color:#666c74;margin-top:3px}
 .grille{position:absolute;left:452px;top:252px;width:96px;height:38px;border-radius:6px;
@@ -263,14 +267,16 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 
   <div class="knob chords" data-knob="c1" style="left:185px;top:78px"><div class="ring"></div><div class="cap"><div class="ind"></div></div><div class="klabel"></div></div>
   <div class="knob chords" data-knob="c2" style="left:300px;top:78px"><div class="ring"></div><div class="cap"><div class="ind"></div></div><div class="klabel"></div></div>
-  <div class="encoder" id="encoder" style="left:500px;top:76px"><div class="cap"></div><div class="ind"></div><div class="klabel" style="top:62px">KEY</div></div>
+  <div class="kbtn" id="btnProg" style="left:372px;width:102px" title="Next progression (→ key; ← goes back)"><i>♫</i>PROGRESSION</div>
+  <div class="kbtn" id="btnKeyUp" style="left:480px;width:70px" title="Key up a semitone (↑ key)"><i>▲</i>KEY UP</div>
+  <div class="kbtn" id="btnKeyDn" style="left:556px;width:72px" title="Key down a semitone (↓ key)"><i>▼</i>KEY DOWN</div>
   <div class="knob notes" data-knob="n1" style="left:790px;top:78px"><div class="ring"></div><div class="cap"><div class="ind"></div></div><div class="klabel"></div></div>
   <div class="knob notes" data-knob="n2" style="left:905px;top:78px"><div class="ring"></div><div class="cap"><div class="ind"></div></div><div class="klabel"></div></div>
 
   <div id="padsL"></div>
   <div id="padsR"></div>
 
-  <div class="screen"><canvas id="oled" width="344" height="172" title="Click to change screen"></canvas></div>
+  <div class="screen"><div id="lcdKey">C</div><div id="lcdProg">MAJOR</div></div>
   <div class="brand">sigma<small>SYNTH</small></div>
   <div class="grille"></div>
   <div class="tbtn" data-t="rec" style="left:380px"><b>●</b><span>REC</span></div>
@@ -349,12 +355,12 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <b>Chords (left hand):</b> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> / <kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> — the 7 chords of the key. &nbsp;
       <b>Notes (right hand):</b> <kbd>U</kbd><kbd>I</kbd><kbd>O</kbd><kbd>P</kbd><kbd>[</kbd><kbd>]</kbd> / <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd> — 11 steps of the scale, starting two notes below the key's root (the root is on <kbd>O</kbd>, outlined in pink).<br>
       <b>Octave:</b> <kbd>Z</kbd>/<kbd>X</kbd> for chords, <kbd>,</kbd>/<kbd>.</kbd> for notes. &nbsp;
-      <b>Key:</b> <kbd>↑</kbd>/<kbd>↓</kbd> (or <kbd>-</kbd>/<kbd>=</kbd>, or turn the center encoder). Changing the key transposes a recorded loop with it. <b>Scale / progression:</b> <kbd>←</kbd>/<kbd>→</kbd>, or click the encoder. &nbsp;
+      <b>Key:</b> <kbd>↑</kbd>/<kbd>↓</kbd> (or <kbd>-</kbd>/<kbd>=</kbd>, or the KEY UP / KEY DOWN buttons). Changing the key transposes a recorded loop with it. <b>Scale / progression:</b> <kbd>←</kbd>/<kbd>→</kbd>, or the PROGRESSION button. &nbsp;
       <b>Looper:</b> <kbd>Space</kbd> record on/off, <kbd>Enter</kbd> play/stop, <kbd>1</kbd> rec button (tap 3× while armed to set the tempo), <kbd>2</kbd> multiply, <kbd>Backspace</kbd> undo (hold it to clear), <kbd>T</kbd> tap (re-grid a free loop on its downbeats), <kbd>Delete</kbd> metronome on/off.<br>
       <b>Arpeggiator:</b> click the ARP switch at the top left or press <kbd>`</kbd> to cycle Off → Up → Down → Random. Hold a chord and it plays the chord's notes one at a time. Set rate, gate and octaves in the Chords engine card.<br>
       <b>Drums:</b> press <kbd>\</kbd> or use the NOTES / DRUMS / BASS switch at the top right to turn the right-hand pads into an 11-piece drum kit. The same keys play it.<br>
       <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. It is mono, so a new note cuts the last one; turn up Glide to slide between notes. <kbd>,</kbd>/<kbd>.</kbd> change its octave.<br>
-      <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards. Click the screen to switch between scope, spectrum and the loop view.
+      <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards.
     </div>
   </section>
 
@@ -365,7 +371,6 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
         <div class="gname">Global</div>
         <div class="row"><label>Right side</label><div class="seg" id="segRight"><button data-v="notes">Notes</button><button data-v="drums">Drums</button><button data-v="bass">Bass</button></div></div>
         <div class="row"><label>Note mode</label><div class="seg" id="segMode"><button data-v="mono">Mono</button><button data-v="poly">Poly (4)</button></div></div>
-        <div class="row"><label>Screen</label><div class="seg" id="segScreen"><button data-v="scope">Scope</button><button data-v="spectrum">Spectrum</button><button data-v="loop">Loop</button></div></div>
         <div class="sl"><label>Master</label><input type="range" id="master" min="0" max="1000"><output id="masterOut"></output></div>
         <div class="row"><button id="btnPanic">All notes off</button><span class="small" id="latency"></span></div>
       </div>
@@ -497,7 +502,7 @@ const ROMAN=['I','II','III','IV','V','VI','VII'];
 
 /* =================== state =================== */
 function defaultEngine(){const e={wave:'sawtooth',filterType:'lowpass',moog:false,arp:'off',farp:'off',farpTrig:'tempo'};for(const k in PARAMS)e[k]=PARAMS[k].def;return e;}
-const DEFAULT_STATE=()=>({root:0,scale:'Major',bpm:100,master:0.8,noteMode:'mono',delayDiv:'1/8.',delayFb:0.35,revSize:0.5,screen:'scope',
+const DEFAULT_STATE=()=>({root:0,scale:'Major',bpm:100,master:0.8,noteMode:'mono',delayDiv:'1/8.',delayFb:0.35,revSize:0.5,
   rightMode:'notes',melCard:'notes',drums:{kit:'808',volume:0.8,tune:0,decay:1,cutoff:18000,resonance:0,reverb:0.1,levels:new Array(11).fill(1)},knobs:{c1:'cutoff',c2:'resonance',n1:'cutoff',n2:'resonance',b1:'cutoff',b2:'punch'},knobRev:2,quant:16,magnet:2,loopMode:'fixed',loopSound:true,ui:'basic',collapsed:{},mix:{chords:1,notes:1,bass:1,drums:1,click:0.3},chords:defaultEngine(),notes:defaultEngine(),bass:defaultBass()});
 let S=DEFAULT_STATE();
 // the UI fork keeps its own saved settings (gammaweb-ui.*); the first time, it starts from the original's (gammaweb.*)
@@ -850,7 +855,7 @@ function detectGrid(L,onsets){
 }
 const looper={
   events:[],ops:[],state:'empty',bars:1,phrase:1,metro:false,start:0,schedFrom:0,layer:0,opSeq:0,taps:[],
-  amp:new Float32Array(MAX_BARS*4*AMP_RES),ampLast:-1,lastPos:0,prevScreen:null,
+  amp:new Float32Array(MAX_BARS*4*AMP_RES),ampLast:-1,lastPos:0,
   get beat(){return 60/S.bpm;},
   get lenBeats(){return this.state==='rec'&&this.free?MAX_BARS*4:this.bars*4;},
   get gridless(){return this.state==='rec'&&this.free&&!this.tempoKnown;},   // free first take: no tempo yet
@@ -995,16 +1000,16 @@ const looper={
   },
   stop(){
     this.lastPos=this.loopPos(); this.silenceScheduled(); this.state='stop';
-    restoreScreen(); flash('■ STOP');
+    flash('■ STOP');
   },
   recPress(){
     switch(this.state){
-      case 'empty': this.state='armed'; this.taps=[performance.now()/1000]; followScreen(); flash('ARMED · PLAY TO START'); break;
+      case 'empty': this.state='armed'; this.taps=[performance.now()/1000]; flash('ARMED · PLAY TO START'); break;
       case 'armed': this.tap(performance.now()/1000); break;
       case 'rec': this.endFirst(); break;
       case 'play': this.startLayer(); this.state='dub'; flash('● OVERDUB'); break;
       case 'dub': this.endLayer(); this.state='play'; flash('▶ PLAY'); break;
-      case 'stop': this.startClock(); this.startLayer(); this.state='dub'; followScreen(); flash('● OVERDUB'); break;
+      case 'stop': this.startClock(); this.startLayer(); this.state='dub'; flash('● OVERDUB'); break;
     }
   },
   tap(now){
@@ -1020,11 +1025,11 @@ const looper={
   playPress(){
     switch(this.state){
       case 'empty': flash('NOTHING RECORDED'); break;
-      case 'armed': this.state='empty'; this.taps=[]; restoreScreen(); flash('DISARMED'); break;
+      case 'armed': this.state='empty'; this.taps=[]; flash('DISARMED'); break;
       case 'rec': this.endFirst(); this.stop(); break;
       case 'dub': this.endLayer(); this.state='play'; this.stop(); break;
       case 'play': this.stop(); break;
-      case 'stop': this.startClock(); this.state='play'; followScreen(); flash('▶ PLAY'); break;
+      case 'stop': this.startClock(); this.state='play'; flash('▶ PLAY'); break;
     }
   },
   multiply(){
@@ -1049,7 +1054,7 @@ const looper={
       if(this.bars>1){this.bars--; flash(`LOOP LENGTH ${this.bars} BAR${this.bars>1?'S':''}`);} else flash('NOTHING TO UNDO');
       return;
     }
-    if(this.state==='rec'){this.clear(true); this.state='armed'; followScreen(); flash('DISCARDED · ARMED'); return;}
+    if(this.state==='rec'){this.clear(true); this.state='armed'; flash('DISCARDED · ARMED'); return;}
     if(this.state==='dub'){this.endLayer(); this.state='play';}
     const op=this.ops.pop(); if(!op) return;
     if(!this.ops.length){this.clear(true); flash('LOOP CLEARED'); return;}   // undoing the first recording empties the loop (length is kept)
@@ -1064,11 +1069,8 @@ const looper={
     if(ctx&&this.playing) this.silenceScheduled();
     this.events=[]; this.ops=[]; this.state='empty'; if(!keepLength) this.bars=1; this.phrase=1; this.amp.fill(0); this.taps=[]; this.lastPos=0;
     this.free=false; this.freeLoop=false; this.tempoKnown=false; this.gridTaps=[];
-    restoreScreen();
   }
 };
-function followScreen(){if(S.screen!=='loop'){looper.prevScreen=S.screen; S.screen='loop'; syncGlobalUI();}}
-function restoreScreen(){if(looper.prevScreen&&S.screen==='loop'){S.screen=looper.prevScreen; syncGlobalUI();} looper.prevScreen=null;}
 function schedulePlay(ev,at,dur){
   const eng=engines[ev.eng];
   ev.midis.forEach(m=>eng.play(m,ev.vel,at).release(at+dur));
@@ -1755,14 +1757,13 @@ function setupKnobs(){
 }
 function setKnobNorm(kid,n){const kt=knobTarget(kid);kt.set(fromNorm(kt.P,n));}
 
-function setupEncoder(){
-  const el=$('#encoder'); let sy=0,acc=0,moved=0,active=false,rot=0;
-  const turn=d=>{rot+=d*30; el.querySelector('.ind').style.transform=`rotate(${rot}deg)`; setRoot(S.root+d);};
-  el.addEventListener('pointerdown',e=>{e.preventDefault();ensureAudio();el.setPointerCapture(e.pointerId);active=true;sy=e.clientY;acc=0;moved=0;});
-  el.addEventListener('pointermove',e=>{if(!active) return;const dy=sy-e.clientY;sy=e.clientY;acc+=dy;moved+=Math.abs(dy);while(acc>=18){acc-=18;turn(1);}while(acc<=-18){acc+=18;turn(-1);}});
-  el.addEventListener('pointerup',()=>{active=false;if(moved<4){const names=Object.keys(SCALES);setScale(names[(names.indexOf(S.scale)+1)%names.length]);}});
-  el.addEventListener('pointercancel',()=>{active=false;});
-  el.addEventListener('wheel',e=>{e.preventDefault();turn(e.deltaY<0?1:-1);},{passive:false});
+function setupKeyButtons(){
+  const bind=(id,fn)=>{const el=$('#'+id);
+    el.addEventListener('pointerdown',e=>{e.preventDefault(); ensureAudio(); el.classList.add('down'); fn();});
+    const up=()=>el.classList.remove('down'); el.addEventListener('pointerup',up); el.addEventListener('pointerleave',up); el.addEventListener('pointercancel',up);};
+  bind('btnProg',()=>{const names=Object.keys(SCALES); setScale(names[(names.indexOf(S.scale)+1)%names.length]);});
+  bind('btnKeyUp',()=>setRoot(S.root+1));
+  bind('btnKeyDn',()=>setRoot(S.root-1));
 }
 
 
@@ -1825,60 +1826,15 @@ const bsHold={
 };
 
 
-/* =================== OLED =================== */
-const oledCv=$('#oled'), og=oledCv.getContext('2d'), OS=oledCv.width/128;
-function drawOled(){
-  const g=og,now=performance.now();
-  g.setTransform(OS,0,0,OS,0,0); g.fillStyle='#000'; g.fillRect(0,0,128,64);
-  g.fillStyle='#dffcff'; g.textBaseline='top';
-  if(!ctx){
-    g.font='bold 14px ui-monospace,Consolas,monospace'; g.textAlign='center'; g.fillText('sigma',64,18);
-    g.font='bold 6px ui-monospace,Consolas,monospace'; g.fillText((now/600|0)%2?'PRESS TO POWER ON':'',64,40); g.textAlign='left';
-    return;
-  }
-  g.font='bold 7px ui-monospace,Consolas,monospace';
-  const blink=(now/300|0)%2;
-  if(S.screen==='loop') drawLoopHeader(g,now);
-  else{
-    g.fillText(`${pcName(S.root)} ${SCALE_ABBR[S.scale]}`,1,1);
-    let right=`${fmtBpm(S.bpm)}`;
-    if(looper.hasLoop||looper.state==='rec'){const {pos}=loopView(); right=`${looper.recording?(blink?'●':'○'):looper.playing?'▶':'■'}${Math.floor(pos/4)+1}.${Math.floor(pos)%4+1} ${fmtBpm(S.bpm)}`;}
-    else if(looper.state==='armed') right=`${blink?'◌':' '}ARM ${fmtBpm(S.bpm)}`;
-    else if(looper.metro) right=`♩${Math.floor(looper.posBeats())%4+1} ${fmtBpm(S.bpm)}`;
-    g.textAlign='right'; g.fillText(right,127,1); g.textAlign='left';
-  }
-  for(let x=0;x<128;x+=2) g.fillRect(x,9,1,1);
-  if(S.screen==='scope') drawScope(g); else if(S.screen==='spectrum') drawSpectrum(g); else drawLoopPage(g,now);
-  if(S.screen!=='loop'&&(looper.hasLoop||looper.state==='rec')) drawMiniBar(g);
-  const flashing=now<flashUntil;
-  let msg=flashing?flashMsg:lastPlayed;
-  if(!flashing&&S.screen==='loop'&&looper.hasLoop&&now-lastActivity>1500){
-    const n=looper.ops.filter(o=>o.type==='layer').length;
-    msg=`${n} LAYER${n===1?'':'S'} · PHRASE ${looper.phrase} BAR${looper.phrase>1?'S':''}`;
-  }
-  if(flashing){g.fillRect(0,55,128,9); g.fillStyle='#000';}
-  g.fillText(msg,1,56);
-  g.fillStyle='#dffcff';
-  if(loopFlash&&now-loopFlash<120) g.fillRect(124,57,3,5);
-}
-function drawScope(g){
-  analyser.getFloatTimeDomainData(timeBuf);
-  let tr=0; for(let i=1;i<1024;i++){if(timeBuf[i-1]<=0&&timeBuf[i]>0){tr=i;break;}}
-  let py=null;
-  for(let x=0;x<128;x++){
-    const v=timeBuf[tr+x*6]||0, y=clamp(Math.round(32-v*22),11,53);
-    if(py===null) g.fillRect(x,y,1,1); else g.fillRect(x,Math.min(y,py),1,Math.abs(y-py)+1);
-    py=y;
-  }
-}
-function drawSpectrum(g){
-  analyser.getByteFrequencyData(freqBuf);
-  const bars=32,minB=2,maxB=600;
-  for(let i=0;i<bars;i++){
-    const a=Math.floor(minB*Math.pow(maxB/minB,i/bars)),b=Math.max(a+1,Math.floor(minB*Math.pow(maxB/minB,(i+1)/bars)));
-    let m=0; for(let j=a;j<b;j++) m=Math.max(m,freqBuf[j]);
-    const h=Math.round(m/255*42); g.fillRect(i*4,53-h,3,h);
-  }
+/* =================== LCD: key + progression =================== */
+let lcdShown='';
+function updateLcd(){
+  const key=pcName(S.root), prog=S.scale.toUpperCase(), sig=key+'|'+prog;
+  if(sig===lcdShown) return; lcdShown=sig;
+  const kEl=$('#lcdKey'), pEl=$('#lcdProg');
+  kEl.textContent=key; pEl.textContent=prog;
+  let fs=14; pEl.style.fontSize=fs+'px';
+  while(pEl.scrollWidth>pEl.clientWidth+0.5&&fs>8){fs-=0.5; pEl.style.fontSize=fs+'px';}   // long names shrink to fit
 }
 
 /* =================== panel UI =================== */
@@ -2056,7 +2012,6 @@ function syncParamUI(en,pid){
 function syncGlobalUI(){
   $('#selRoot').value=S.root; $('#selScale').value=S.scale;
   $$('#segMode button').forEach(b=>b.classList.toggle('active',b.dataset.v===S.noteMode));
-  $$('#segScreen button').forEach(b=>b.classList.toggle('active',b.dataset.v===S.screen));
   $('#master').value=S.master*1000; $('#masterOut').textContent=Math.round(S.master*100)+'%';
   $('#bpm').value=fmtBpm(S.bpm); $('#selQuant').value=S.quant; $('#selMagnet').value=S.magnet;
   $('#selDelayDiv').value=S.delayDiv;
@@ -2099,7 +2054,6 @@ function buildPanel(){
   $('#selRoot').onchange=e=>setRoot(+e.target.value);
   $('#selScale').onchange=e=>setScale(e.target.value);
   $$('#segMode button').forEach(b=>b.onclick=()=>{noteCtl.panic(); S.noteMode=b.dataset.v; syncGlobalUI(); flash('NOTES '+S.noteMode.toUpperCase()); saveState();});
-  $$('#segScreen button').forEach(b=>b.onclick=()=>{S.screen=b.dataset.v; looper.prevScreen=null; syncGlobalUI(); saveState();});
   $('#master').oninput=e=>{S.master=e.target.value/1000; if(ctx) master.gain.setTargetAtTime(S.master,ctx.currentTime,0.02); $('#masterOut').textContent=Math.round(S.master*100)+'%'; updateMetroGain(); saveState();};
   $('#btnPanic').onclick=panic;
   $('#bpm').onchange=e=>{looper.setBpm(+e.target.value); syncGlobalUI();};
@@ -2117,13 +2071,12 @@ function buildPanel(){
   $('#selMidiIn').onchange=bindMidiIn;
   $('#selMidiOut').onchange=e=>{midi.out=midi.access?midi.access.outputs.get(e.target.value)||null:null;};
   $('#chkThru').onchange=e=>{midi.thru=e.target.checked;};
-  oledCv.addEventListener('click',()=>{ensureAudio(); const m=['scope','spectrum','loop']; S.screen=m[(m.indexOf(S.screen)+1)%m.length]; looper.prevScreen=null; syncGlobalUI(); saveState();});
 }
 
 /* looper controls */
 function spaceRecord(){   // Space = record on/off: like REC, except a second press while armed cancels instead of tapping tempo
   ensureAudio();
-  if(looper.state==='armed'){looper.state='empty'; looper.taps=[]; restoreScreen(); flash('DISARMED'); updateTransport(); return;}
+  if(looper.state==='armed'){looper.state='empty'; looper.taps=[]; flash('DISARMED'); updateTransport(); return;}
   transport('rec');
 }
 function toggleMetro(){ensureAudio(); looper.metro=!looper.metro; if(looper.metro&&!looper.playing) looper.startClock(); updateTransport(); flash(looper.metro?'METRONOME ON':'METRONOME OFF');}
@@ -2219,54 +2172,6 @@ function ampCol(x,cols,n){
   const a=Math.floor(x/cols*n),b=Math.max(a+1,Math.floor((x+1)/cols*n)); let m=0;
   for(let i=a;i<b;i++) m=Math.max(m,looper.amp[i]);
   return [m,a];
-}
-function drawLoopHeader(g,now){
-  const blink=(now/300|0)%2;
-  g.fillText({empty:'LOOPER',armed:blink?'◌ ARMED':'  ARMED',rec:(blink?'●':'○')+' REC',dub:(blink?'●':'○')+' DUB',play:'▶ PLAY',stop:'■ STOP'}[looper.state],1,1);
-  let right=S.loopMode==='free'?`FREE ${fmtBpm(S.bpm)}`:`${looper.bars} BAR${looper.bars>1?'S':''} ${fmtBpm(S.bpm)}`;
-  if(looper.gridless) right=`FREE ${(ctx.currentTime-looper.start).toFixed(1)}s`;
-  else if(looper.hasLoop||looper.state==='rec'){const {pos,LB}=loopView(); right=`${Math.floor(pos/4)+1}.${Math.floor(pos)%4+1}/${LB/4}  ${fmtBpm(S.bpm)}`;}
-  g.textAlign='right'; g.fillText(right,127,1); g.textAlign='left';
-}
-function drawLoopPage(g,now){
-  const {st,pos,LB}=loopView(), blink=(now/300|0)%2;
-  if(st==='empty'||st==='armed'){
-    const bl=`${looper.bars} BAR${looper.bars>1?'S':''}`;
-    g.textAlign='center';
-    if(st==='empty'){g.fillText(`LOOP LENGTH ${bl}`,64,13); g.fillText('REC ARMS · MULT +1 BAR',64,24); g.fillText('UNDO -1 BAR',64,34);}
-    else{if(blink) g.fillText('● ARMED',64,13); g.fillText('PLAY A NOTE TO START',64,24); g.fillText(`${bl} · ${fmtBpm(S.bpm)} BPM`,64,34);}
-    g.textAlign='left';
-    const w=128/looper.bars;                                  // one block per bar = the loop length
-    for(let b=0;b<looper.bars;b++) g.fillRect(Math.round(b*w)+1,45,Math.max(1,Math.round(w)-2),4);
-    return;
-  }
-  const X=b=>Math.round(b/LB*128), mid=26, half=13, n=LB*AMP_RES, played=pos*AMP_RES;
-  for(let x=0;x<128;x++){                                   // loudness: solid behind the playhead, dithered ahead
-    const [m,a]=ampCol(x,128,n), h=Math.round(ampNorm(m)*half); if(!h) continue;
-    if(st!=='rec'&&a>played){for(let y=mid-h;y<=mid+h;y++) if((x+y)&1) g.fillRect(x,y,1,1);}
-    else g.fillRect(x,mid-h,1,h*2+1);
-  }
-  const phraseB=looper.phrase*4;
-  for(let q=0;q<=LB&&!looper.gridless;q++){                 // bar lines, phrase marks, beat ticks
-    const x=Math.min(127,X(q));
-    if(q%4===0){
-      g.fillStyle='#000'; g.fillRect(x,mid-half,1,half*2+1); g.fillStyle='#dffcff';
-      g.fillRect(x,11,1,st!=='rec'&&q%phraseB===0?3:2); g.fillRect(x,40,1,2);
-    }else if(128/LB>=3) g.fillRect(x,11,1,1);
-  }
-  const lanes={chords:44,notes:47,drums:50};
-  for(const ev of looper.events){
-    if(ev.tb>=LB) continue;
-    const d=ev.durB==null?Math.max(0.05,pos-ev.tb):ev.durB, x1=X(ev.tb), x2=Math.max(x1+1,Math.min(128,X(ev.tb+d)));
-    g.fillRect(x1,lanes[ev.eng],ev.eng==='drums'?1:x2-x1,2);
-  }
-  const px=Math.min(127,Math.floor(pos/LB*128));
-  g.fillStyle='#000'; g.fillRect(px-1,11,3,42); g.fillStyle='#dffcff'; g.fillRect(px,11,1,42);
-}
-function drawMiniBar(g){
-  const {pos,LB}=loopView(), px=Math.floor(pos/LB*128);
-  for(let x=0;x<128;x++) if(x<=px||!(x&1)) g.fillRect(x,54,1,1);
-  g.fillStyle='#000'; for(let b=4;b<LB;b+=4) g.fillRect(Math.round(b/LB*128),54,1,1); g.fillStyle='#dffcff';
 }
 const loopCv=$('#loopCanvas'), lcg=loopCv.getContext('2d');
 function drawLoopPanel(){
@@ -2453,7 +2358,7 @@ function loadLoop(L){
   looper.bars=L.bars; looper.phrase=L.phrase||L.bars;
   looper.amp.fill(0); (L.amp||[]).forEach((v,i)=>{if(i<looper.amp.length) looper.amp[i]=v;});
   looper.freeLoop=false; looper.lastPos=0; looper.state='stop';
-  if(wasPlaying){looper.startClock(); looper.state='play'; followScreen();}   // live: switch straight to the new loop
+  if(wasPlaying){looper.startClock(); looper.state='play';}   // live: switch straight to the new loop
   syncAll(); updateDelay(); updateTransport();
   currentLoopName=L.name; flash(`LOADED ${L.name.toUpperCase()}`,1800); saveState();
 }
@@ -2675,7 +2580,7 @@ function fit(){
   inner.style.height=(464*s)+'px';
 }
 function frame(){
-  captureAmp(); drawOled(); updateLoopStatus(); drawLoopPanel();
+  captureAmp(); updateLcd(); updateLoopStatus(); drawLoopPanel();
   requestAnimationFrame(frame);
 }
 (function boot(){
@@ -2684,7 +2589,6 @@ function frame(){
     const base=DEFAULT_STATE();
     S={...base,...saved,knobs:{...base.knobs,...(saved.knobs||{})},chords:{...defaultEngine(),...(saved.chords||{})},notes:{...defaultEngine(),...(saved.notes||{})}};
     if(!SCALES[S.scale]) S.scale='Major';
-    if(!['scope','spectrum','loop'].includes(S.screen)) S.screen='scope';   // the pet screen is gone
     if(!S.collapsed||typeof S.collapsed!=='object') S.collapsed={};
     S.drums={...base.drums,...(saved.drums||{})}; if(!DRUM_KITS[S.drums.kit]) S.drums.kit='808';
     S.mix={...base.mix,...(saved.mix||{})};
@@ -2695,7 +2599,7 @@ function frame(){
   }else{
     const [,p]=FACTORY[0]; S.chords={...defaultEngine(),...p.c}; S.notes={...defaultEngine(),...p.n};
   }
-  buildPads(); buildPanel(); setupUiMode(); setupKnobs(); setupEncoder(); setupTransport(); setupMix();
+  buildPads(); buildPanel(); setupUiMode(); setupKnobs(); setupKeyButtons(); setupTransport(); setupMix();
   $('#arpSw').addEventListener('click',cycleArp);
   syncAll(); updateTransport(); renderSlots(); setupLoops(); setupExport(); renderDrumList(); loadStoredSamples();
   fit(); window.addEventListener('resize',fit);
