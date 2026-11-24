@@ -359,7 +359,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <b>Looper:</b> <kbd>Space</kbd> record on/off, <kbd>Enter</kbd> play/stop, <kbd>1</kbd> rec button (tap 3× while armed to set the tempo), <kbd>2</kbd> multiply, <kbd>Backspace</kbd> undo (hold it to clear), <kbd>T</kbd> tap (re-grid a free loop on its downbeats), <kbd>Delete</kbd> metronome on/off.<br>
       <b>Arpeggiator:</b> click the ARP switch at the top left or press <kbd>`</kbd> to cycle Off → Up → Down → Random. Hold a chord and it plays the chord's notes one at a time. Set rate, gate and octaves in the Chords engine card.<br>
       <b>Drums:</b> press <kbd>\</kbd> or use the NOTES / DRUMS / BASS switch at the top right to turn the right-hand pads into an 11-piece drum kit. The same keys play it.<br>
-      <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. It is mono, so a new note cuts the last one; turn up Glide to slide between notes. <kbd>,</kbd>/<kbd>.</kbd> change its octave.<br>
+      <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. It is mono, so a new note cuts the last one; turn up Glide to slide between notes. <kbd>,</kbd>/<kbd>.</kbd> change its octave. Set <b>Pads</b> to <b>Follow chord</b> in the Bass card and the pads play the notes of whatever chord is sounding: O is the root, the pads around it are the chord's other notes. Hold a pad and the bass follows every chord change you play, or the loop's chords when you're not holding one.<br>
       <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards.
     </div>
   </section>
@@ -477,7 +477,7 @@ const BASS_GROUPS=[['Sound',['volume','octave','pitch']],['Punch & envelope',['p
 const BASS_BASIC=new Set(['volume','octave','punch','hit','release','cutoff','drive','reverb']);
 const BASS_KICKS={'808':'808','acoustic':'Acoustic','lofi':'Lo-Fi','kit':'Drum kit'};
 const RIGHT_MODES=['notes','drums','bass'];
-function defaultBass(){const b={kick:'808'};for(const k in BASS_PARAMS)b[k]=BASS_PARAMS[k].def;return b;}
+function defaultBass(){const b={kick:'808',layout:'scale'};for(const k in BASS_PARAMS)b[k]=BASS_PARAMS[k].def;return b;}
 const FARP_PATTERNS={off:'Off',up:'Up',down:'Down',updown:'Up-down',random:'Random'};
 // octave layers: extra oscillators stacked on every note (ratio to the played pitch, detune direction for the spread)
 const LAYERS=[{id:'subOct',ratio:0.5,sign:-1},{id:'octUp',ratio:2,sign:1},{id:'oct2Up',ratio:4,sign:-1},{id:'fifth',ratio:Math.pow(2,7/12),sign:1}];
@@ -882,7 +882,7 @@ const looper={
     if(tb>=LB-1e-6){tb=0;c++;}
     const key=midis.join(',');
     if(this.events.some(e=>e.eng===eng&&Math.abs(e.tb-tb)<0.02&&e.midis.join(',')===key)) return null;   // already on that spot
-    if(!opts.arp&&(eng==='chords'||(eng==='notes'&&S.noteMode==='mono')))   // a new chord / mono note ends the previous one
+    if(!opts.arp&&(eng==='chords'||eng==='bass'||(eng==='notes'&&S.noteMode==='mono')))   // a new chord / mono note / bass note ends the previous one
       for(const e of this.events) if(e.eng===eng&&!e.arp&&e.layer===this.layer&&e.cycle===c&&e.tb<tb){
         if(e.durB==null) e.clipB=Math.max(0.05,tb-e.tb); else if(e.tb+e.durB>tb) e.durB=Math.max(0.05,tb-e.tb);
       }
@@ -1074,6 +1074,7 @@ const looper={
 function schedulePlay(ev,at,dur){
   const eng=engines[ev.eng];
   ev.midis.forEach(m=>eng.play(m,ev.vel,at).release(at+dur));
+  if(ev.eng==='chords') bassCtl.loopChord(ev,at);   // bass in follow mode moves with the loop's chords
   const delay=Math.max(0,(at-ctx.currentTime)*1000);
   setTimeout(()=>{loopFlash=performance.now();},delay);
 }
@@ -1113,7 +1114,8 @@ const chordCtl={
     const midis=chordMidis(k,this.variation);
     this.cur={key:k,midis};
     if(arp.on){arp.start(); lastActivity=performance.now();}
-    else{this.voices=midis.map(m=>engines.chords.play(m,0.9,t)); this.h=liveOn('chords',midis,0.9,false,false,tm);}
+    else{this.voices=midis.map(m=>engines.chords.play(m,0.9,t)); this.h=liveOn('chords',midis,0.9,false,false,tm); if(this.h) tagChord(this.h.ev,k,midis);}
+    bassCtl.chordChanged(tm);
     lastPlayed=this.label();
   },
   label(){return chordName(chordRoot(this.cur.key),this.cur.midis)+(arp.on?' · ARP '+ARP_PATTERNS[S.chords.arp]:'');},
@@ -1126,13 +1128,13 @@ const chordCtl={
     if(!this.cur||!ctx) return;
     const midis=chordMidis(this.cur.key,this.variation);
     if(midis.join()===this.cur.midis.join()) return;
-    if(arp.on){this.cur.midis=midis; lastPlayed=this.label(); return;}   // the arp uses the new notes on its next step
+    if(arp.on){this.cur.midis=midis; bassCtl.chordChanged(); lastPlayed=this.label(); return;}   // the arp uses the new notes on its next step
     const t=ctx.currentTime;
     midis.forEach((m,i)=>{if(this.voices[i]) this.voices[i].setFreq(m,t,0.012); else this.voices[i]=engines.chords.play(m,0.9,t);});
     for(let i=midis.length;i<this.voices.length;i++) this.voices[i].release(t);
     this.voices.length=midis.length;
-    liveOff(this.h); this.h=liveOn('chords',midis,0.9,false,true);
-    this.cur.midis=midis; lastPlayed=chordName(chordRoot(this.cur.key),midis);
+    liveOff(this.h); this.h=liveOn('chords',midis,0.9,false,true); if(this.h) tagChord(this.h.ev,this.cur.key,midis);
+    this.cur.midis=midis; bassCtl.chordChanged(); lastPlayed=chordName(chordRoot(this.cur.key),midis);
   },
   stop(){
     if(!ctx) return; arp.stop();
@@ -1199,7 +1201,7 @@ const arp={
     this.idx=i;
     const m=seq[i], d=this.stepDur()*S.chords.arpGate;
     const v=engines.chords.play(m,ARP_VEL,t); v.release(Math.max(t+0.03,logT+d));
-    const ev=looper.recordOn('chords',[m],1,logT,{exact:true,arp:true}); if(ev) ev.durB=d/looper.beat;
+    const ev=looper.recordOn('chords',[m],1,logT,{exact:true,arp:true}); if(ev){ev.durB=d/looper.beat; if(chordCtl.cur) tagChord(ev,chordCtl.cur.key,chordCtl.cur.midis);}
     const now=ctx.currentTime; this.steps=this.steps.filter(s=>s.t>now-2); this.steps.push({t:logT,v,ev});
     midiSend('chords',[m],true,0.8,toPerf(t)); midiSend('chords',[m],false,0,toPerf(logT+d));
   }
@@ -1497,35 +1499,103 @@ class BassVoice{
     this.gain.disconnect(); e.voices.delete(this);
   }
 }
+/* follow-chord mode: what chord is sounding, and which of its notes each bass pad plays */
+const BASS_ROLE={0:'ROOT',1:'♭9',2:'2ND',3:'3RD',4:'3RD',5:'4TH',6:'♭5',7:'5TH',8:'♯5',9:'6TH',10:'7TH',11:'MAJ7'};
+function chordInfo(root,midis){return {root,ints:[...new Set(midis.map(m=>((m-root)%12+12)%12))].sort((a,b)=>a-b)};}
+function tagChord(ev,k,midis){if(!ev) return; const c=chordInfo(chordRoot(k),midis); ev.root=c.root; ev.ch=c.ints;}   // stored with loop chords
+function guessChord(midis){   // loops saved before chord roots were stored: find the root that names the chord
+  const ms=[...midis].sort((a,b)=>a-b);
+  for(const r of ms){const c=chordInfo(r,ms); if(CHORD_TYPES[c.ints.join(',')]!==undefined) return c;}
+  return chordInfo(ms[0],ms);
+}
+function evChord(ev){if(ev.ch&&ev.root!=null) return {root:ev.root,ints:ev.ch}; if(ev.arp||!ev.midis.length) return null; return guessChord(ev.midis);}
+function loopChordAt(t){   // the chord the loop is playing at time t: the last one that started at or before it, wrapping round
+  if(!ctx||!looper.playing||looper.gridless||(looper.state==='rec'&&looper.free)) return null;
+  const LB=looper.bars*4, pos=((((t-looper.start)/looper.beat)%LB)+LB)%LB+0.02;
+  let best=null,bd=Infinity;
+  for(const ev of looper.events){
+    if(ev.eng!=='chords'||ev.tb>=LB) continue;
+    const d=((pos-ev.tb)%LB+LB)%LB; if(d>=bd) continue;
+    const c=evChord(ev); if(c){best=c; bd=d;}
+  }
+  return best;
+}
 const bassCtl={
-  held:[],voice:null,h:null,
-  midiOf(k){return scaleMidi(k-NOTE_OFFSET,36+12*S.bass.octave);},   // root on the O key, C2 octave
+  held:[],voice:null,prev:null,h:null,lastChord:null,labelSig:'',
+  follow(){return S.bass.layout==='follow';},
+  chordAt(t){   // the chord you hold > the loop's chord > the last chord you played > chord I
+    const cur=chordCtl.cur; if(cur) return chordInfo(chordRoot(cur.key),cur.midis);
+    return loopChordAt(t)||this.lastChord||chordInfo(chordRoot(0),chordMidis(0));
+  },
+  role(k,c){   // pad k -> a note of chord c: the root on O, then up / down through the chord's notes
+    const n=c.ints.length,i=k-NOTE_OFFSET,o=Math.floor(i/n),j=i-o*n,kr=36+12*S.bass.octave+S.root;
+    const root=kr+((((c.root-kr)%12)+18)%12-6);   // the chord's root, kept within half an octave of the key's root
+    return {m:root+c.ints[j]+12*o,iv:c.ints[j]};
+  },
+  sigOf(c){return (c.root%12)+':'+c.ints.join(',')+':'+S.bass.octave+':'+S.root;},
+  midiOf(k,t){
+    if(!this.follow()) return scaleMidi(k-NOTE_OFFSET,36+12*S.bass.octave);   // scale layout: root on the O key, C2 octave
+    return this.role(k,this.chordAt(t??(ctx?ctx.currentTime:0))).m;
+  },
   sounding(){return this.voice&&!this.voice.released;},
   press(k){
     this.held=this.held.filter(x=>x!==k); this.held.push(k);
-    const m=this.midiOf(k),tm=trigTime(),t=tm.play;
+    const tm=trigTime(),t=tm.play,m=this.midiOf(k,t);
     if(S.bass.glide>0&&this.sounding()) this.voice.setFreq(m,t,S.bass.glide);
-    else this.voice=engines.bass.play(m,1,t);
+    else{this.prev=this.voice; this.voice=engines.bass.play(m,1,t);}
     liveOff(this.h,tm.log); this.h=liveOn('bass',[m],1,false,false,tm);
     lastPlayed=noteName(m);
   },
+  retarget(at,log,smooth){   // follow mode: the chord changed under a held pad
+    if(!this.follow()||!this.held.length||!this.voice||!ctx) return;
+    const m=this.midiOf(this.held[this.held.length-1],at);
+    if(m===this.voice.midi) return;
+    if(this.sounding()&&(smooth||S.bass.glide>0)) this.voice.setFreq(m,at,smooth?0.012:S.bass.glide);
+    else{this.prev=this.voice; this.voice=engines.bass.play(m,1,at);}   // a new chord: hit the new note, like a bass player would
+    liveOff(this.h,log); this.h=liveOn('bass',[m],1,false,true,{play:at,log});
+  },
+  chordChanged(tm){   // a live chord was played (tm) or re-voiced (no tm)
+    const cur=chordCtl.cur; if(!cur) return;
+    this.lastChord=chordInfo(chordRoot(cur.key),cur.midis);
+    if(tm) this.retarget(tm.play,tm.log,false); else if(ctx){const t=ctx.currentTime; this.retarget(t,t,true);}
+  },
+  loopChord(ev,at){if(!chordCtl.cur&&evChord(ev)) this.retarget(at,at,false);},   // the loop moves on to its next chord
   release(k){
     this.held=this.held.filter(x=>x!==k);
     if(!this.voice) return;
+    const now=ctx.currentTime;
     if(this.held.length){   // fall back to the last key still held
-      const m=this.midiOf(this.held[this.held.length-1]);
+      const tm=trigTime(), m=this.midiOf(this.held[this.held.length-1],tm.play);
       if(m===this.voice.midi&&this.sounding()) return;
-      const tm=trigTime();
-      if(this.sounding()) this.voice.setFreq(m,tm.play,S.bass.glide); else this.voice=engines.bass.play(m,1,tm.play);
+      if(this.sounding()) this.voice.setFreq(m,tm.play,S.bass.glide); else{this.prev=this.voice; this.voice=engines.bass.play(m,1,tm.play);}
       liveOff(this.h,tm.log); this.h=liveOn('bass',[m],1,false,true,tm); lastPlayed=noteName(m);
-    }else{const rt=relAt(this.h?this.h.play:ctx.currentTime); this.voice.release(rt); this.voice=null; liveOff(this.h,rt); this.h=null;}
+      return;
+    }
+    if(this.voice.t0>now+0.003){   // let go just before a queued chord-change hit: drop that hit
+      liveOff(this.h,this.voice.t0); if(this.h&&this.h.ev) looper.events=looper.events.filter(e=>e!==this.h.ev);
+      this.voice.cancel(); if(this.prev) this.prev.release(now);
+      this.voice=this.prev=null; this.h=null; return;
+    }
+    const rt=relAt(this.h?this.h.play:now);
+    this.voice.release(rt); if(this.prev) this.prev.release(rt);
+    this.voice=this.prev=null; liveOff(this.h,rt); this.h=null;
   },
   panic(){
     this.held=[]; if(!ctx) return;
-    if(this.voice){this.voice.release(ctx.currentTime); this.voice=null;}
-    liveOff(this.h); this.h=null;
+    const t=ctx.currentTime;
+    if(this.voice) this.voice.release(t); if(this.prev) this.prev.release(t);
+    this.voice=this.prev=null; liveOff(this.h); this.h=null;
+  },
+  tickLabels(){   // follow mode: relabel the pads whenever the sounding chord changes
+    if(S.rightMode!=='bass'||!this.follow()||!ctx) return;
+    if(this.sigOf(this.chordAt(ctx.currentTime))!==this.labelSig) renderPadLabels();
   }
 };
+function setBassLayout(v){
+  if(!['scale','follow'].includes(v)) return;
+  bassCtl.panic(); S.bass.layout=v; bassCtl.labelSig='';
+  renderPadLabels(); syncBassUI(); flash(v==='follow'?'BASS PADS · FOLLOW CHORD':'BASS PADS · SCALE'); saveState();
+}
 function setBassParam(pid,v,opts={}){
   const P=BASS_PARAMS[pid]; v=clamp(v,P.min,P.max); if(P.step) v=Math.round(v/P.step)*P.step;
   S.bass[pid]=v;
@@ -1672,16 +1742,16 @@ function setParam(en,pid,v,opts={}){
 }
 function transposeLoop(d){   // shift every recorded chord/note (not drums) by d semitones
   if(!d||!looper.events.length) return false;
-  looper.events.forEach(e=>{if(e.eng!=='drums') e.midis=e.midis.map(m=>m+d);});
+  looper.events.forEach(e=>{if(e.eng!=='drums'){e.midis=e.midis.map(m=>m+d); if(e.root!=null) e.root+=d;}});
   return true;
 }
 function setRoot(r){
   const nr=((r%12)+12)%12, d=((nr-S.root)%12+18)%12-6;   // the short way round: -6..+5 semitones
-  S.root=nr; const moved=transposeLoop(d);
+  S.root=nr; bassCtl.lastChord=null; const moved=transposeLoop(d);
   renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`KEY ${pcName(S.root)} ${SCALE_ABBR[S.scale]}`+(moved?` · LOOP ${d>0?'+':''}${d}`:'')); saveState();
 }
 function setScale(s){if(CHORD_SETS[s]&&!CHORD_SETS[S.scale]&&CHORD_SETS[s].root!=null&&!looper.events.length) S.root=CHORD_SETS[s].root;   // never jump the key under a recorded loop
-  S.scale=s; renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`${pcName(S.root)} ${SCALE_ABBR[S.scale]}`); saveState();}
+  S.scale=s; bassCtl.lastChord=null; renderPadLabels(); chordCtl.revoice(); syncGlobalUI(); flash(`${pcName(S.root)} ${SCALE_ABBR[S.scale]}`); saveState();}
 
 /* =================== device UI =================== */
 const PAD_POS={
@@ -1715,9 +1785,15 @@ function renderPadLabels(){
   for(let k=0;k<7;k++){
     const c=padEl('c',k); c.querySelector('.nm').textContent=chordName(chordRoot(k),chordMidis(k)); c.querySelector('.sub').textContent=roman(k);
   }
+  const fc=S.rightMode==='bass'&&S.bass.layout==='follow'?bassCtl.chordAt(ctx?ctx.currentTime:0):null;
+  if(fc) bassCtl.labelSig=bassCtl.sigOf(fc);
   for(let k=0;k<NOTE_KEYS;k++){
     const n=padEl('n',k);
-    if(S.rightMode==='drums'){
+    if(fc){   // follow mode: each pad shows its note and its place in the chord
+      const r=bassCtl.role(k,fc);
+      n.querySelector('.nm').textContent=pcName(r.m); n.querySelector('.sub').textContent=`${BASS_ROLE[r.iv]} · ${noteName(r.m)}`;
+      n.classList.toggle('root',r.iv===0);
+    }else if(S.rightMode==='drums'){
       const c=storedSamples['pad'+k];
       n.querySelector('.nm').textContent=DRUM_SHORT[k]; n.querySelector('.sub').textContent=c?sampleLabel(c.name):DRUM_KITS[S.drums.kit];
     }else{
@@ -1891,6 +1967,7 @@ const HELP={
   dreverb:['Drum reverb (send)','How much of the kit goes into the shared reverb.'],
   loops:['Saved loops','Save new track stores the current loop (all its layers, tempo and key, plus the sounds and mix) under a name, and you can load it back any time. Loading while a loop is playing starts the new one right away. Export / Import backs your loops up to a file.'],
   kick:['Kick sample','The kick the bass is made from: 808 (long, round), Acoustic (tighter), Lo-Fi (crunchy), or Drum kit to follow the kit chosen in the Drums card.'],
+  blayout:['Pad layout','Scale: the pads play the key\'s scale like the Notes pads, with the root on O. Follow chord: the pads play the notes of the chord that is sounding (the one you hold on the left, or the loop\'s chord when you hold none). O is always the root, P and [ go up through the chord, U and I go below it. Hold a pad and the bass moves with every chord change.'],
   bvolume:['Bass volume','How loud the bass is, as part of its sound. Use the BASS knob in the MIX to balance it against the rest.'],
   boctave:['Bass octave','Shifts the bass pads by whole octaves. The root sits on the O key, in the C2 octave at 0. Also on the , and . keys in bass mode.'],
   bpitch:['Bass pitch','Transposes the bass in semitones.'],
@@ -1974,6 +2051,7 @@ const CARD_TABS='<span class="seg ctabs"><button type="button" data-card="notes"
 function buildBassCard(){
   let h=`<h3><span class="dot b"></span>Bass <span class="tag">right hand · pitched kick</span>${CARD_TABS}</h3>`;
   h+=`<div class="row"><label style="display:flex;align-items:center">Kick${info('kick')}</label><div class="seg" id="segKick">${Object.entries(BASS_KICKS).map(([k,v])=>`<button type="button" data-kick="${k}">${v}</button>`).join('')}</div></div>`;
+  h+=`<div class="row"><label style="display:flex;align-items:center">Pads${info('blayout')}</label><div class="seg" id="segBassLayout"><button type="button" data-blayout="scale">Scale</button><button type="button" data-blayout="follow">Follow chord</button></div></div>`;
   for(const [gname,ids] of BASS_GROUPS){
     const basicGrp=ids.some(id=>BASS_BASIC.has(id));
     h+=`<div class="grp${['Punch & envelope','Tone'].includes(gname)?' sect':''}${basicGrp?'':' adv'}" data-g="bass:${gname}"><div class="gname"><span class="chev">▾</span>${gname}</div>`;
@@ -1992,6 +2070,7 @@ function syncBassUI(){
     const o=document.querySelector(`output[data-bout="${pid}"]`); if(o) o.textContent=P.fmt(S.bass[pid]);
   }
   $$('#segKick button').forEach(b=>b.classList.toggle('active',b.dataset.kick===S.bass.kick));
+  $$('#segBassLayout button').forEach(b=>b.classList.toggle('active',b.dataset.blayout===S.bass.layout));
   refreshKnobs();
 }
 function syncParamUI(en,pid){
@@ -2048,6 +2127,7 @@ function buildPanel(){
     const b=e.target.closest('button'); if(!b) return;
     if(b.dataset.wave){ensureAudio(); setParam(b.dataset.en,'wave',b.dataset.wave);}
     if(b.dataset.kick){ensureAudio(); setBassKick(b.dataset.kick); return;}
+    if(b.dataset.blayout){ensureAudio(); setBassLayout(b.dataset.blayout); return;}
     if(b.dataset.card){S.melCard=b.dataset.card==='bass'?'bass':'notes'; applyRightModeUI(); saveState(); return;}   // view only
     const seg=b.closest('.seg[data-seg]'); if(seg){ensureAudio(); setParam(seg.dataset.en,seg.dataset.seg,b.dataset.v);}
   });
@@ -2179,7 +2259,7 @@ function drawLoopPanel(){
   if(loopCv.width!==Math.round(W*dpr)||loopCv.height!==Math.round(H*dpr)){loopCv.width=Math.round(W*dpr); loopCv.height=Math.round(H*dpr);}
   const g=lcg; g.setTransform(dpr,0,0,dpr,0,0); g.fillStyle='#0b0c0f'; g.fillRect(0,0,W,H);
   const st=looper.state, idle=!ctx||st==='empty'||st==='armed';
-  const {pos,LB}=idle?{pos:0,LB:looper.bars*4}:loopView(), top=15, laneH=5, lanesTop=H-3*(laneH+2)-2, ampH=lanesTop-top-6, mid=top+ampH/2;
+  const {pos,LB}=idle?{pos:0,LB:looper.bars*4}:loopView(), top=15, laneH=5, LANES=[['chords','#2fe0c0'],['notes','#ff5fa2'],['bass','#4c9cff'],['drums','#ffb23f']], lanesTop=H-LANES.length*(laneH+2)-2, ampH=lanesTop-top-6, mid=top+ampH/2;
   const X=b=>b/LB*W, bw=X(4), phraseB=looper.phrase*4;
   for(let b=0;b<LB/4;b++) if(b%2){g.fillStyle='#101319'; g.fillRect(X(b*4),top,bw,H-top);}
   const n=LB*AMP_RES, played=pos*AMP_RES;
@@ -2207,7 +2287,6 @@ function drawLoopPanel(){
     g.fillStyle=st==='armed'?'#ff8a8a':'#8b929b'; g.textAlign='center'; g.fillText(msg,W/2,H/2+4); g.textAlign='left';
     return;
   }
-  const LANES=[['chords','#2fe0c0'],['notes','#ff5fa2'],['drums','#ffb23f']];
   LANES.forEach(([eng,col],i)=>{
     const y=lanesTop+i*(laneH+2); g.fillStyle='rgba(255,255,255,.035)'; g.fillRect(0,y,W,laneH); g.fillStyle=col;
     for(const ev of looper.events){
@@ -2353,7 +2432,7 @@ function applyPreset(name,c,n,g,d,b){
   S.chords={...defaultEngine(),...keepArp,...c}; S.notes={...defaultEngine(),...n};
   const base=DEFAULT_STATE(); PRESET_GLOBALS.forEach(k=>S[k]=(g&&g[k]!==undefined)?g[k]:base[k]);
   if(d) S.drums={...S.drums,...d};   // per-pad levels stay as you set them
-  if(b) S.bass={...defaultBass(),...b};   // user presets carry the bass; factory presets leave it alone
+  if(b) S.bass={...defaultBass(),...b,layout:S.bass.layout};   // user presets carry the bass sound (the pad layout is a playing setting); factory presets leave it alone
   if(ctx){engines.chords.applyAll(true); engines.notes.applyAll(true); if(d) engines.drums.apply(); if(b) engines.bass.apply(true); updateDelay(); reverb.buffer=makeIR(S.revSize);}
   if(d||b) renderPadLabels();
   syncAll(); flash(name.toUpperCase(),1800); saveState();
@@ -2372,9 +2451,9 @@ function snapshotLoop(name){
   const n=looper.bars*4*AMP_RES;
   return {v:1,name,saved:Date.now(),bars:looper.bars,phrase:looper.phrase,bpm:S.bpm,root:S.root,scale:S.scale,
     ops:looper.ops.map(o=>({...o})),opSeq:looper.opSeq,
-    events:looper.events.filter(e=>e.durB!=null).map(e=>({eng:e.eng,midis:[...e.midis],vel:e.vel,tb:+e.tb.toFixed(4),durB:+e.durB.toFixed(4),layer:e.layer,arp:!!e.arp})),
+    events:looper.events.filter(e=>e.durB!=null).map(e=>({eng:e.eng,midis:[...e.midis],vel:e.vel,tb:+e.tb.toFixed(4),durB:+e.durB.toFixed(4),layer:e.layer,arp:!!e.arp,...(e.ch?{root:e.root,ch:[...e.ch]}:{})})),
     amp:Array.from(looper.amp.slice(0,n),v=>+v.toFixed(3)),
-    sound:{chords:{...S.chords},notes:{...S.notes},drums:{...S.drums,levels:[...(S.drums.levels||[])]},mix:{...S.mix},
+    sound:{chords:{...S.chords},notes:{...S.notes},bass:{...S.bass},drums:{...S.drums,levels:[...(S.drums.levels||[])]},mix:{...S.mix},
       noteMode:S.noteMode,delayDiv:S.delayDiv,delayFb:S.delayFb,revSize:S.revSize}};
 }
 function loadLoop(L){
@@ -2386,9 +2465,10 @@ function loadLoop(L){
     const keepArp={}; ARP_KEYS.forEach(k=>keepArp[k]=S.chords[k]);
     S.chords={...defaultEngine(),...L.sound.chords,...keepArp}; S.notes={...defaultEngine(),...L.sound.notes};
     S.drums={...S.drums,...L.sound.drums}; S.mix={...S.mix,...L.sound.mix};
+    if(L.sound.bass){S.bass={...defaultBass(),...L.sound.bass,layout:S.bass.layout}; if(!BASS_KICKS[S.bass.kick]) S.bass.kick='808';}   // older loops keep the current bass
     ['noteMode','delayDiv','delayFb','revSize'].forEach(k=>{if(L.sound[k]!==undefined) S[k]=L.sound[k];});
-    engines.chords.applyAll(true); engines.notes.applyAll(true); engines.drums.apply();
-    ['chords','notes','drums'].forEach(en=>engines[en].mix.gain.setTargetAtTime(S.mix[en],ctx.currentTime,0.02));
+    engines.chords.applyAll(true); engines.notes.applyAll(true); engines.drums.apply(); engines.bass.apply(true);
+    ['chords','notes','bass','drums'].forEach(en=>engines[en].mix.gain.setTargetAtTime(S.mix[en]??1,ctx.currentTime,0.02));
     updateMetroGain(); reverb.buffer=makeIR(S.revSize); renderMix();
   }
   looper.setBpm(L.bpm);
@@ -2621,7 +2701,7 @@ function fit(){
   inner.style.height=(464*s)+'px';
 }
 function frame(){
-  captureAmp(); updateLcd(); updateLoopStatus(); drawLoopPanel();
+  captureAmp(); updateLcd(); updateLoopStatus(); drawLoopPanel(); bassCtl.tickLabels();
   requestAnimationFrame(frame);
 }
 (function boot(){
@@ -2634,6 +2714,7 @@ function frame(){
     S.drums={...base.drums,...(saved.drums||{})}; if(!DRUM_KITS[S.drums.kit]) S.drums.kit='808';
     S.mix={...base.mix,...(saved.mix||{})};
     S.bass={...defaultBass(),...(saved.bass||{})}; if(!BASS_KICKS[S.bass.kick]) S.bass.kick='808';
+    if(!['scale','follow'].includes(S.bass.layout)) S.bass.layout='scale';
     if(!RIGHT_MODES.includes(S.rightMode)) S.rightMode='notes';
     if(!['notes','bass'].includes(S.melCard)) S.melCard=S.rightMode==='bass'?'bass':'notes';
     if(!(saved.knobRev>=2)){S.knobs.c2='resonance'; S.knobs.n2='resonance'; S.knobRev=2;}   // one-time move: knob 2 on each side -> resonance
