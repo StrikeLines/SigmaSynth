@@ -104,6 +104,7 @@ body{background:radial-gradient(ellipse at 50% -10%,#1d2530 0%,var(--bg) 60%) fi
 /* bass mode: blue pads */
 #padsR.bass .pad.on{box-shadow:0 1px 0 #08090a,0 0 22px rgba(76,156,255,.55),inset 0 0 14px rgba(76,156,255,.35);background:linear-gradient(180deg,#1c3050,#141a24)}
 #padsR.bass .pad.root:not(.on){box-shadow:0 5px 0 #08090a,0 8px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(76,156,255,.55),inset 0 1px 0 rgba(255,255,255,.08)}
+#padsR.bass .pad.ct:not(.on){box-shadow:0 5px 0 #08090a,0 8px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(76,156,255,.3),inset 0 1px 0 rgba(255,255,255,.08)}
 #padsR.bass .pad .nm{color:#a9cdff}
 #padsR.bass .pad .sub{color:#6f86a6}
 #padsR.bass .pad .kb{color:#3f5f8a}
@@ -359,7 +360,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <b>Looper:</b> <kbd>Space</kbd> record on/off, <kbd>Enter</kbd> play/stop, <kbd>1</kbd> rec button (tap 3× while armed to set the tempo), <kbd>2</kbd> multiply, <kbd>Backspace</kbd> undo (hold it to clear), <kbd>T</kbd> tap (re-grid a free loop on its downbeats), <kbd>Delete</kbd> metronome on/off.<br>
       <b>Arpeggiator:</b> click the ARP switch at the top left or press <kbd>`</kbd> to cycle Off → Up → Down → Random. Hold a chord and it plays the chord's notes one at a time. Set rate, gate and octaves in the Chords engine card.<br>
       <b>Drums:</b> press <kbd>\</kbd> or use the NOTES / DRUMS / BASS switch at the top right to turn the right-hand pads into an 11-piece drum kit. The same keys play it.<br>
-      <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. It is mono, so a new note cuts the last one; turn up Glide to slide between notes. <kbd>,</kbd>/<kbd>.</kbd> change its octave. Set <b>Pads</b> to <b>Follow chord</b> in the Bass card and the pads play the notes of whatever chord is sounding: O is the root, the pads around it are the chord's other notes. Hold a pad and the bass follows every chord change you play, or the loop's chords when you're not holding one.<br>
+      <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. It is mono, so a new note cuts the last one; turn up Glide to slide between notes. <kbd>,</kbd>/<kbd>.</kbd> change its octave. Set <b>Pads</b> to <b>Follow chord</b> in the Bass card and the pads play the whole scale of whatever chord is sounding, starting from its root on O (the chord's own notes are outlined). Hold a pad and the bass follows every chord change you play, or the loop's chords when you're not holding one.<br>
       <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards.
     </div>
   </section>
@@ -1500,7 +1501,27 @@ class BassVoice{
   }
 }
 /* follow-chord mode: what chord is sounding, and which of its notes each bass pad plays */
-const BASS_ROLE={0:'ROOT',1:'♭9',2:'2ND',3:'3RD',4:'3RD',5:'4TH',6:'♭5',7:'5TH',8:'♯5',9:'6TH',10:'7TH',11:'MAJ7'};
+const BASS_ROLE={0:'ROOT',1:'♭2',2:'2ND',3:'♭3',4:'3RD',5:'4TH',6:'♭5',7:'5TH',8:'♭6',9:'6TH',10:'♭7',11:'7TH'};
+const roleName=(iv,c)=>iv===6&&!c.ints.includes(6)?'♯4':iv===8&&c.ints.includes(8)&&!c.ints.includes(7)?'♯5':BASS_ROLE[iv];
+// the full scale for a chord, as intervals from its root: the key's notes starting from the chord's root,
+// with the chord's own notes taking the place of any key note they clash with (A major in C: C# replaces C)
+const DEG_RANGE=[[0],[1,2],[3,4],[5,6],[6,7,8],[8,9],[10,11]], DEG_DEF=[0,2,4,5,7,9,10];
+function chordScale(c){
+  const sc=SCALES[S.scale], key=sc.map(x=>((S.root+x-c.root)%12+12)%12);
+  if(sc.length<7) return [...new Set([0,...key,...c.ints])].sort((a,b)=>a-b);   // pentatonic, blues, whole tone: the key's notes plus the chord's
+  const has=i=>c.ints.includes(i), deg=new Array(7).fill(null), rootIn=key.includes(0);   // 7 notes, or Daft Punk's 8: one note per step
+  const put=(d,i)=>{if(deg[d]==null) deg[d]=i;};
+  for(const i of c.ints){   // each chord note claims its scale step
+    if(i===0) put(0,0); else if(i<=2) put(1,i); else if(i===3) put(has(4)?1:2,3); else if(i===4) put(2,4); else if(i===5) put(3,5);
+    else if(i===6) put(has(7)?3:4,6); else if(i===7) put(4,7); else if(i===8) put(has(7)?5:4,8); else if(i===9) put(5,9); else put(6,i);
+  }
+  for(let d=1;d<7;d++){   // the other steps come from the key (nearest the usual interval), else the usual interval
+    if(deg[d]!=null) continue;
+    const used=new Set(deg.filter(v=>v!=null)), opts=DEG_RANGE[d].filter(i=>key.includes(i)&&!used.has(i)&&(rootIn||i!==1));   // a chord on a flattened root (A♭ in C) skips the key note it replaced
+    deg[d]=opts.length?opts.sort((a,b)=>Math.abs(a-DEG_DEF[d])-Math.abs(b-DEG_DEF[d]))[0]:(used.has(DEG_DEF[d])?null:DEG_DEF[d]);
+  }
+  return [...new Set(deg.filter(v=>v!=null))].sort((a,b)=>a-b);
+}
 function chordInfo(root,midis){return {root,ints:[...new Set(midis.map(m=>((m-root)%12+12)%12))].sort((a,b)=>a-b)};}
 function tagChord(ev,k,midis){if(!ev) return; const c=chordInfo(chordRoot(k),midis); ev.root=c.root; ev.ch=c.ints;}   // stored with loop chords
 function guessChord(midis){   // loops saved before chord roots were stored: find the root that names the chord
@@ -1527,12 +1548,12 @@ const bassCtl={
     const cur=chordCtl.cur; if(cur) return chordInfo(chordRoot(cur.key),cur.midis);
     return loopChordAt(t)||this.lastChord||chordInfo(chordRoot(0),chordMidis(0));
   },
-  role(k,c){   // pad k -> a note of chord c: the root on O, then up / down through the chord's notes
-    const n=c.ints.length,i=k-NOTE_OFFSET,o=Math.floor(i/n),j=i-o*n,kr=36+12*S.bass.octave+S.root;
+  role(k,c){   // pad k -> a step of chord c's scale: the root on O, the scale running up from there (U and I below it)
+    const iv=chordScale(c),n=iv.length,i=k-NOTE_OFFSET,o=Math.floor(i/n),j=i-o*n,kr=36+12*S.bass.octave+S.root;
     const root=kr+((((c.root-kr)%12)+18)%12-6);   // the chord's root, kept within half an octave of the key's root
-    return {m:root+c.ints[j]+12*o,iv:c.ints[j]};
+    return {m:root+iv[j]+12*o,iv:iv[j],ct:c.ints.includes(iv[j])};
   },
-  sigOf(c){return (c.root%12)+':'+c.ints.join(',')+':'+S.bass.octave+':'+S.root;},
+  sigOf(c){return (c.root%12)+':'+c.ints.join(',')+':'+S.bass.octave+':'+S.root+':'+S.scale;},
   midiOf(k,t){
     if(!this.follow()) return scaleMidi(k-NOTE_OFFSET,36+12*S.bass.octave);   // scale layout: root on the O key, C2 octave
     return this.role(k,this.chordAt(t??(ctx?ctx.currentTime:0))).m;
@@ -1788,11 +1809,11 @@ function renderPadLabels(){
   const fc=S.rightMode==='bass'&&S.bass.layout==='follow'?bassCtl.chordAt(ctx?ctx.currentTime:0):null;
   if(fc) bassCtl.labelSig=bassCtl.sigOf(fc);
   for(let k=0;k<NOTE_KEYS;k++){
-    const n=padEl('n',k);
-    if(fc){   // follow mode: each pad shows its note and its place in the chord
+    const n=padEl('n',k); n.classList.remove('ct');
+    if(fc){   // follow mode: each pad shows its note and its step from the chord's root; the chord's own notes are outlined
       const r=bassCtl.role(k,fc);
-      n.querySelector('.nm').textContent=pcName(r.m); n.querySelector('.sub').textContent=`${BASS_ROLE[r.iv]} · ${noteName(r.m)}`;
-      n.classList.toggle('root',r.iv===0);
+      n.querySelector('.nm').textContent=pcName(r.m); n.querySelector('.sub').textContent=`${roleName(r.iv,fc)} · ${noteName(r.m)}`;
+      n.classList.toggle('root',r.iv===0); n.classList.toggle('ct',r.ct&&r.iv!==0);
     }else if(S.rightMode==='drums'){
       const c=storedSamples['pad'+k];
       n.querySelector('.nm').textContent=DRUM_SHORT[k]; n.querySelector('.sub').textContent=c?sampleLabel(c.name):DRUM_KITS[S.drums.kit];
@@ -1967,7 +1988,7 @@ const HELP={
   dreverb:['Drum reverb (send)','How much of the kit goes into the shared reverb.'],
   loops:['Saved loops','Save new track stores the current loop (all its layers, tempo and key, plus the sounds and mix) under a name, and you can load it back any time. Loading while a loop is playing starts the new one right away. Export / Import backs your loops up to a file.'],
   kick:['Kick sample','The kick the bass is made from: 808 (long, round), Acoustic (tighter), Lo-Fi (crunchy), or Drum kit to follow the kit chosen in the Drums card.'],
-  blayout:['Pad layout','Scale: the pads play the key\'s scale like the Notes pads, with the root on O. Follow chord: the pads play the notes of the chord that is sounding (the one you hold on the left, or the loop\'s chord when you hold none). O is always the root, P and [ go up through the chord, U and I go below it. Hold a pad and the bass moves with every chord change.'],
+  blayout:['Pad layout','Scale: the pads play the key\'s scale like the Notes pads, with the root on O. Follow chord: the pads play the whole scale of the chord that is sounding (the one you hold on the left, or the loop\'s chord when you hold none), starting from its root on O and running up from there, with U and I below it. The chord\'s own notes are outlined. Hold a pad and the bass moves with every chord change.'],
   bvolume:['Bass volume','How loud the bass is, as part of its sound. Use the BASS knob in the MIX to balance it against the rest.'],
   boctave:['Bass octave','Shifts the bass pads by whole octaves. The root sits on the O key, in the C2 octave at 0. Also on the , and . keys in bass mode.'],
   bpitch:['Bass pitch','Transposes the bass in semitones.'],
