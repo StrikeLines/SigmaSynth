@@ -7,7 +7,7 @@
 <style>
 :root{
   --bg:#0a0b0d; --panel:#141619; --panel2:#1b1e22; --line:#2a2e35; --text:#e8eaed; --dim:#8b929b;
-  --accent:#2fe0c0; --accent2:#ff5fa2; --accent3:#ffb23f; --rec:#ff3b3b; --oled:#dffcff;
+  --accent:#2fe0c0; --accent2:#ff5fa2; --accent3:#ffb23f; --accent4:#4c9cff; --rec:#ff3b3b; --oled:#dffcff;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -55,6 +55,8 @@ header.top span{color:var(--dim);font-size:13px}
 .knob.notes .ring{background:conic-gradient(from 225deg,var(--accent2) 0deg calc(var(--v)*270deg),#351525 calc(var(--v)*270deg) 270deg,transparent 270deg);filter:drop-shadow(0 0 3px rgba(255,95,162,.35))}
 .knob.drumk .ring{background:conic-gradient(from 225deg,var(--accent3) 0deg calc(var(--v)*270deg),#3a2a10 calc(var(--v)*270deg) 270deg,transparent 270deg);filter:drop-shadow(0 0 3px rgba(255,178,63,.4))}
 .knob.drumk .klabel{color:var(--accent3)}
+.knob.bassk .ring{background:conic-gradient(from 225deg,var(--accent4) 0deg calc(var(--v)*270deg),#12233d calc(var(--v)*270deg) 270deg,transparent 270deg);filter:drop-shadow(0 0 3px rgba(76,156,255,.45))}
+.knob.bassk .klabel{color:var(--accent4)}
 .knob .cap,.encoder .cap{position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 45% 35%,#3b3d42,#0f1012 72%);box-shadow:0 5px 8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.12)}
 .knob .ind{position:absolute;left:50%;top:4px;width:3px;height:14px;margin-left:-1.5px;border-radius:2px;background:#f2f2f2;transform-origin:50% 20px}
 .klabel{position:absolute;left:50%;top:66px;transform:translateX(-50%);font-size:10px;letter-spacing:.8px;color:#9aa1aa;white-space:nowrap;font-weight:600}
@@ -75,6 +77,10 @@ header.top span{color:var(--dim);font-size:13px}
 .pad.n.on{box-shadow:0 1px 0 #08090a,0 0 22px rgba(255,95,162,.55),inset 0 0 14px rgba(255,95,162,.35);background:linear-gradient(180deg,#44232f,#221619)}
 #padsR.drums .pad .nm{font-size:13px;letter-spacing:.6px}
 #padsR.drums .pad .sub{color:#8a7a5c;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#padsR.bass .pad.on{box-shadow:0 1px 0 #08090a,0 0 22px rgba(76,156,255,.6),inset 0 0 14px rgba(76,156,255,.38);background:linear-gradient(180deg,#1c2f4d,#131b27)}
+#padsR.bass .pad.root:not(.on){box-shadow:0 5px 0 #08090a,0 8px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(76,156,255,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+#padsR.bass .pad .nm{color:#bcd9ff}
+#padsR.bass .pad .kb{color:#3f5f8c}
 #padsR.drums .pad.on{box-shadow:0 1px 0 #08090a,0 0 22px rgba(255,178,63,.55),inset 0 0 14px rgba(255,178,63,.35);background:linear-gradient(180deg,#46371c,#221c13)}
 .pad.drop{outline:2px dashed var(--accent3);outline-offset:2px}
 #arpSw{position:absolute;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:3px 3px 3px 8px;border-radius:8px;background:#0e0f11;
@@ -83,10 +89,11 @@ header.top span{color:var(--dim);font-size:13px}
 #arpSw b{font:700 9px/1 system-ui,sans-serif;letter-spacing:.5px;color:#646b74;padding:6px 7px;border-radius:5px;background:#1a1c1f;min-width:42px;text-align:center}
 #arpSw.on b{color:var(--accent);background:#2a2d31;box-shadow:0 0 8px rgba(47,224,192,.35)}
 #modeSw{position:absolute;transform:translateX(-50%);display:flex;gap:3px;padding:4px;border-radius:11px;background:#0e0f11;box-shadow:inset 0 1px 3px #000,0 1px 0 rgba(255,255,255,.06);cursor:pointer;touch-action:manipulation;user-select:none}
-#modeSw span{font:700 13px/1 system-ui,sans-serif;letter-spacing:1.2px;color:#646b74;padding:11px 14px;border-radius:8px;pointer-events:none}
+#modeSw span{font:700 12px/1 system-ui,sans-serif;letter-spacing:1px;color:#646b74;padding:11px 10px;border-radius:8px}
 #modeSw span.on{background:#2a2d31;box-shadow:0 1px 0 rgba(255,255,255,.08)}
 #modeSw span[data-v=notes].on{color:var(--accent2)}
 #modeSw span[data-v=drums].on{color:var(--accent3)}
+#modeSw span[data-v=bass].on{color:var(--accent4)}
 .pad.n.root:not(.on){box-shadow:0 5px 0 #08090a,0 8px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,95,162,.45),inset 0 1px 0 rgba(255,255,255,.08)}
 #padsR.drums .pad:not(.on){box-shadow:0 5px 0 #08090a,0 8px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,178,63,.5),inset 0 1px 0 rgba(255,255,255,.08)}
 #padsR.drums .pad .nm{color:#ffcf8a}
@@ -129,6 +136,9 @@ main.panel{max-width:1260px;margin:22px auto 40px;padding:0 16px;display:grid;gr
 .card h3 .tag{font-size:11px;font-weight:500;color:var(--dim)}
 .card h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
 .card h3 .dot.n{background:var(--accent2)}
+.card h3 .dot.b{background:var(--accent4)}
+.cardtabs{margin-left:auto}
+.cardtabs button{padding:3px 10px;font-size:11px;font-weight:600}
 .row{display:flex;align-items:center;gap:8px;margin:7px 0;flex-wrap:wrap}
 .row>label{font-size:12px;color:var(--dim);min-width:74px}
 select,input[type=number],input[type=text]{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:5px 7px;font:inherit;font-size:13px}
@@ -137,6 +147,7 @@ button{background:var(--panel2);color:var(--text);border:1px solid var(--line);b
 button:hover{border-color:#3d434b}
 button.active{background:#173a34;border-color:var(--accent);color:#bff7ec}
 .eng-notes button.active{background:#3d1a29;border-color:var(--accent2);color:#ffd3e5}
+.eng-bass button.active{background:#16263f;border-color:var(--accent4);color:#d3e6ff}
 .seg{display:inline-flex}
 .seg button{border-radius:0;margin-left:-1px}
 .seg button:first-child{border-radius:7px 0 0 7px;margin-left:0}
@@ -144,7 +155,7 @@ button.active{background:#173a34;border-color:var(--accent);color:#bff7ec}
 .waves{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
 .waves button{padding:6px 2px;font-size:11px;font-weight:600;letter-spacing:.5px}
 .grp{border-top:1px solid var(--line);padding-top:6px;margin-top:8px}
-.eng-chords{--sec:rgba(47,224,192,.75)} .eng-notes{--sec:rgba(255,95,162,.75)}
+.eng-chords{--sec:rgba(47,224,192,.75)} .eng-notes{--sec:rgba(255,95,162,.75)} .eng-bass{--sec:rgba(76,156,255,.75)}
 .grp.sect{border-top:2px solid var(--sec);margin-top:16px;padding-top:9px}   /* colored divider between the card's main sections */
 .gname{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6c737c;margin-bottom:3px}
 .sl{display:grid;grid-template-columns:100px 1fr 58px;align-items:center;gap:8px;height:24px}
@@ -160,6 +171,7 @@ button.active{background:#173a34;border-color:var(--accent);color:#bff7ec}
 .sl output{font-size:11px;color:#c9ced4;text-align:right;font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 .eng-notes input[type=range]{accent-color:var(--accent2)}
+.eng-bass input[type=range]{accent-color:var(--accent4)}
 .chk{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:5px}
 .transport{display:flex;gap:6px;flex-wrap:wrap}
 .transport button{min-width:64px;font-weight:600}
@@ -237,6 +249,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <span class="mtitle">MIX</span>
       <div class="mk" data-mix="chords" style="--kc:var(--accent)"><div class="mkn"><div class="ring"></div><div class="cap"><div class="ind"></div></div></div><label>CHORDS</label><output></output></div>
       <div class="mk" data-mix="notes" style="--kc:var(--accent2)"><div class="mkn"><div class="ring"></div><div class="cap"><div class="ind"></div></div></div><label>NOTES</label><output></output></div>
+      <div class="mk" data-mix="bass" style="--kc:var(--accent4)"><div class="mkn"><div class="ring"></div><div class="cap"><div class="ind"></div></div></div><label>BASS</label><output></output></div>
       <div class="mk" data-mix="drums" style="--kc:var(--accent3)"><div class="mkn"><div class="ring"></div><div class="cap"><div class="ind"></div></div></div><label>DRUMS</label><output></output></div>
       <div class="mk" data-mix="click" style="--kc:#b8bec6" title="Metronome level"><div class="mkn"><div class="ring"></div><div class="cap"><div class="ind"></div></div></div><label>CLICK</label><output></output></div>
     </div>
@@ -247,7 +260,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
   <div class="screw" style="left:1130px;top:330px;opacity:.6"></div>
   <div id="beatLed"></div>
   <div id="arpSw" style="left:109px;top:66px" title="Arpeggiator: click to cycle Off / Up / Down / Random (` key)"><span class="lbl">ARP</span><b id="arpState">OFF</b></div>
-  <div id="modeSw" style="left:1061px;top:66px" title="Right side: notes or drums (\ key)"><span data-v="notes">NOTES</span><span data-v="drums">DRUMS</span></div>
+  <div id="modeSw" style="left:1058px;top:66px" title="Right side: notes, drums or bass (\ key cycles)"><span data-v="notes">NOTES</span><span data-v="drums">DRUMS</span><span data-v="bass">BASS</span></div>
 
   <div class="knob chords" data-knob="c1" style="left:185px;top:78px"><div class="ring"></div><div class="cap"><div class="ind"></div></div><div class="klabel"></div></div>
   <div class="knob chords" data-knob="c2" style="left:300px;top:78px"><div class="ring"></div><div class="cap"><div class="ind"></div></div><div class="klabel"></div></div>
@@ -295,6 +308,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
   <div class="enginerow">
       <section class="card eng-chords" id="card-chords"></section>
       <section class="card eng-notes" id="card-notes"></section>
+      <section class="card eng-bass" id="card-bass" style="display:none"></section>
 
       <section class="card eng-drums" id="card-drums">
         <h3><span class="dot d"></span>Drums <span class="tag">right side · 11 pads</span></h3>
@@ -342,13 +356,13 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
     <div class="help">
       <b>Chords (left hand):</b> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> / <kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> — the 7 chords of the key. &nbsp;
       <b>Notes (right hand):</b> <kbd>U</kbd><kbd>I</kbd><kbd>O</kbd><kbd>P</kbd><kbd>[</kbd><kbd>]</kbd> / <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>;</kbd><kbd>'</kbd> — 11 steps of the scale, starting two notes below the key's root (the root is on <kbd>O</kbd>, outlined in pink).<br>
-      <b>Octave:</b> <kbd>Z</kbd>/<kbd>X</kbd> for chords, <kbd>N</kbd>/<kbd>M</kbd> for notes. &nbsp;
+      <b>Octave:</b> <kbd>Z</kbd>/<kbd>X</kbd> for chords, <kbd>N</kbd>/<kbd>M</kbd> for notes (or bass). &nbsp;
       <b>Key:</b> <kbd>-</kbd>/<kbd>=</kbd>, or turn the center encoder. Click the encoder to change the scale. &nbsp;
       <b>Looper:</b> <kbd>Space</kbd> record on/off, <kbd>Enter</kbd> play/stop, <kbd>1</kbd> rec button (tap 3× while armed to set the tempo), <kbd>2</kbd> multiply, <kbd>3</kbd> undo, hold <kbd>0</kbd> to clear, <kbd>T</kbd> tap (re-grid a free loop on its downbeats).<br>
       <b>Loop timeline:</b> each overdub is a track row. Click a row's switch to turn it on/off; click its length (right-click to go back) to make it shorter or longer. A track shorter than the loop repeats to fill it, and Multiply now repeats every track instead of copying notes. Click a note to select it, then drag it or press <kbd>←</kbd>/<kbd>→</kbd> to move it a beat (<kbd>Shift</kbd> = one quantize step); <kbd>Delete</kbd> removes it, <kbd>Esc</kbd> deselects. Set <b>New track</b> to record a short track that repeats.<br>
       <b>Left stick (chord variations):</b> drag it or hold the <kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> arrow keys: ↑ 7th · ↗ 9th · → sus4 · ↘ sus2 · ↓ parallel (major↔minor) · ↙ 2nd inversion · ← 1st inversion · ↖ 6th.<br>
       <b>Arpeggiator:</b> click the ARP switch at the top left or press <kbd>`</kbd> to cycle Off → Up → Down → Random. Hold a chord and it plays the chord's notes one at a time. Set rate, gate and octaves in the Chords engine card.<br>
-      <b>Drums:</b> press <kbd>\</kbd> or use the NOTES / DRUMS switch at the top right to turn the right-hand pads into an 11-piece drum kit. The same keys play it.<br>
+      <b>Drums &amp; bass:</b> press <kbd>\</kbd> or click the NOTES / DRUMS / BASS switch at the top right. DRUMS turns the right-hand pads into an 11-piece kit; BASS plays a kick drum pitched to the notes of the scale, with a punchy hit and an even sustain for as long as you hold the key. The same keys play both.<br>
       <b>Right stick (bend · vib):</b> drag it left/right to bend the pitch, up for vibrato, down to close the filter. It springs back when you let go. A plugged-in gamepad's thumbsticks also work.<br>
       <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards. Click the screen to switch between scope, spectrum and pet.
     </div>
@@ -360,7 +374,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <div>
         <div class="gname">Global</div>
         <div class="row"><label>Key</label><select id="selRoot"></select><select id="selScale"></select></div>
-        <div class="row"><label>Right side</label><div class="seg" id="segRight"><button data-v="notes">Notes</button><button data-v="drums">Drums</button></div></div>
+        <div class="row"><label>Right side</label><div class="seg" id="segRight"><button data-v="notes">Notes</button><button data-v="drums">Drums</button><button data-v="bass">Bass</button></div></div>
         <div class="row"><label>Note mode</label><div class="seg" id="segMode"><button data-v="mono">Mono</button><button data-v="poly">Poly (4)</button></div></div>
         <div class="row"><label>Screen</label><div class="seg" id="segScreen"><button data-v="scope">Scope</button><button data-v="spectrum">Spectrum</button><button data-v="pet">Pet</button><button data-v="loop">Loop</button></div></div>
         <div class="row"><label>Left stick</label><select id="selStickL"></select></div>
@@ -473,8 +487,27 @@ const ROMAN=['I','II','III','IV','V','VI','VII'];
 
 /* =================== state =================== */
 function defaultEngine(){const e={wave:'sawtooth',filterType:'lowpass',moog:false,arp:'off',farp:'off',farpTrig:'tempo'};for(const k in PARAMS)e[k]=PARAMS[k].def;return e;}
+/* bass: a kick drum pitched to the played note; the hit plays once, then its steady tail loops for as long as the key is held */
+const BASS_PARAMS={
+  volume:{label:'Volume',short:'VOL',min:0,max:1.5,def:0.9,fmt:F.pct},
+  octave:{label:'Octave',short:'OCTAVE',min:-2,max:2,step:1,def:0,fmt:F.st},
+  pitch:{label:'Pitch',short:'PITCH',min:-12,max:12,step:1,def:0,fmt:F.st},
+  punch:{label:'Punch',short:'PUNCH',min:0,max:1,def:0.5,fmt:F.pct},
+  hit:{label:'Hit length',short:'HIT',min:0.02,max:0.5,exp:true,def:0.1,fmt:F.s},
+  attack:{label:'Attack',short:'ATTACK',min:0.001,max:0.05,exp:true,def:0.002,fmt:F.s},
+  release:{label:'Release',short:'RELEASE',min:0.01,max:0.6,exp:true,def:0.04,fmt:F.s},
+  glide:{label:'Glide',short:'GLIDE',min:0,max:0.3,def:0,fmt:F.s},
+  cutoff:{label:'Tone (cutoff)',short:'TONE',min:40,max:18000,exp:true,def:3500,fmt:F.hz},
+  resonance:{label:'Resonance',short:'RESO',min:0,max:20,def:0,fmt:F.db},
+  drive:{label:'Drive',short:'DRIVE',min:0,max:1,def:0.25,fmt:F.pct},
+  reverb:{label:'Reverb',short:'REVERB',min:0,max:1,def:0.02,fmt:F.pct},
+  delay:{label:'Delay',short:'DELAY',min:0,max:1,def:0,fmt:F.pct},
+};
+const BASS_GROUPS=[['Sound',['volume','octave','pitch']],['Punch & envelope',['punch','hit','attack','release','glide']],['Tone',['cutoff','resonance','drive']],['Sends',['reverb','delay']]];
+const BASS_KICKS={'808':'808','acoustic':'Acoustic','lofi':'Lo-Fi','kit':'Drum kit'};
+function defaultBass(){const b={kick:'808'}; for(const k in BASS_PARAMS) b[k]=BASS_PARAMS[k].def; return b;}
 const DEFAULT_STATE=()=>({root:0,scale:'Major',bpm:100,master:0.8,noteMode:'mono',delayDiv:'1/8.',delayFb:0.35,revSize:0.5,screen:'scope',
-  rightMode:'notes',drums:{kit:'808',volume:0.8,tune:0,decay:1,cutoff:18000,resonance:0,reverb:0.1,levels:new Array(11).fill(1)},knobs:{c1:'cutoff',c2:'resonance',n1:'cutoff',n2:'resonance'},knobRev:2,stickL:'variation',stickR:'bend',quant:16,magnet:2,loopMode:'fixed',dubBars:0,loopSound:true,mix:{chords:1,notes:1,drums:1,click:0.3},chords:defaultEngine(),notes:defaultEngine()});
+  rightMode:'notes',drums:{kit:'808',volume:0.8,tune:0,decay:1,cutoff:18000,resonance:0,reverb:0.1,levels:new Array(11).fill(1)},knobs:{c1:'cutoff',c2:'resonance',n1:'cutoff',n2:'resonance',b1:'cutoff',b2:'punch'},melCard:'notes',bass:defaultBass(),knobRev:2,stickL:'variation',stickR:'bend',quant:16,magnet:2,loopMode:'fixed',dubBars:0,loopSound:true,mix:{chords:1,notes:1,bass:1,drums:1,click:0.3},chords:defaultEngine(),notes:defaultEngine()});
 let S=DEFAULT_STATE();
 // the UI fork keeps its own saved settings (gammaweb-ui.*); the first time, it starts from the original's (gammaweb.*)
 const store={get(k,d){try{let v=localStorage.getItem(k); if(v==null&&k.startsWith('gammaweb-ui.')) v=localStorage.getItem('gammaweb.'+k.slice(12)); return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
@@ -516,7 +549,7 @@ function initAudio(){
   periodic.pulse=pulseWave(0.22);
   periodic.organ=harmWave([0,1,0.9,0.55,0.45,0,0.3,0,0.25,0,0,0,0.12]);
   periodic.hollow=harmWave([0,1,0,0.45,0,0.08,0,0.28,0,0.04,0,0.1]);
-  engines.chords=new Engine('chords',0.13); engines.notes=new Engine('notes',0.26); engines.drums=new DrumEngine(); decodeStored();
+  engines.chords=new Engine('chords',0.13); engines.notes=new Engine('notes',0.26); engines.drums=new DrumEngine(); engines.bass=new BassEngine(); decodeStored();
   updateDelay();
   setInterval(()=>{looper.tick(); arp.tick(); engines.chords.farpTick(); engines.notes.farpTick();},25);
   setInterval(showLatency,1000);
@@ -903,7 +936,7 @@ const looper={
     if(tb<0) tb=0;
     const cyc=c*R+r, key=midis.join(',');   // cyc: the pass this note was played in, so playback doesn't double it
     if(this.events.some(e=>e.eng===eng&&e.layer===this.layer&&Math.abs(e.tb-tb)<0.02&&e.midis.join(',')===key)) return null;   // already on that spot
-    if(!opts.arp&&(eng==='chords'||(eng==='notes'&&S.noteMode==='mono')))   // a new chord / mono note ends the previous one
+    if(!opts.arp&&(eng==='chords'||eng==='bass'||(eng==='notes'&&S.noteMode==='mono')))   // a new chord / mono note ends the previous one
       for(const e of this.events) if(e.eng===eng&&!e.arp&&e.layer===this.layer&&e.cycle===cyc&&e.tb<tb){
         if(e.durB==null) e.clipB=Math.max(0.05,tb-e.tb); else if(e.tb+e.durB>tb) e.durB=Math.max(0.05,tb-e.tb);
       }
@@ -1407,6 +1440,186 @@ class DrumEngine{
     return hit;
   }
 }
+/* ---- bass engine ---- */
+// render a kit's kick as a bass sample: same pitch sweep and click, but the body never fades, and it settles onto
+// a pitch whose period is a whole number of samples so the tail can loop seamlessly while a key is held
+function renderBassKick(kit,sr){
+  const ac=kit!=='808', rnd=seeded(4321);
+  const f0=ac?150:180, fd=ac?0.018:0.035, P=Math.round(sr/(ac?52:50)), fB=sr/P;
+  const T0=Math.ceil(0.4*sr/4)*4, ls=T0+4*P, le=ls+8*P, n=le+256;   // hit: 0..T0 · steady from T0 · loop ls..le (8 periods)
+  const a=new Float32Array(n), body=0.38, drv=ac?2.2:2.6, nrm=Math.tanh(drv);
+  let ph=0;
+  for(let i=0;i<n;i++){
+    const t=i/sr, f=i<T0?fB+(f0-fB)*Math.exp(-t/fd):fB;
+    ph+=2*Math.PI*f/sr;
+    const amp=i<T0?body+(1-body)*Math.exp(-t/0.07):body;   // the hit is louder; the body holds steady
+    a[i]=amp*Math.sin(ph);
+  }
+  const cn=Math.floor(0.03*sr), cl=biquad(Array.from({length:cn},()=>rnd()*2-1),ac?'lp':'bp',ac?3500:2200,ac?0.7:0.8,sr);
+  for(let i=0;i<cn;i++) a[i]+=cl[i]*Math.exp(-(i/sr)/(ac?0.006:0.004))*(ac?0.7:0.6);
+  for(let i=0;i<n;i++) a[i]=Math.tanh(a[i]*drv)/nrm;
+  const out=kit==='lofi'?lofi(a,sr):a;
+  return {buf:toBuffer(out),base:69+12*Math.log2(fB/440),ls:ls/sr,le:le/sr};
+}
+const BASS_PEAK=0.3;
+class BassEngine{
+  constructor(){
+    this.voices=new Set(); this.samples={};
+    this.mod={bend:0,vib:0,cut:1,res:0,rev:0,del:0};
+    this.input=ctx.createGain();
+    this.filt=ctx.createBiquadFilter(); this.filt.type='lowpass';
+    this.shaper=ctx.createWaveShaper(); this.shaper.oversample='2x';
+    this.out=ctx.createGain(); this.mix=ctx.createGain(); this.mix.gain.value=S.mix.bass??1;
+    this.revSend=ctx.createGain(); this.delSend=ctx.createGain();
+    this.input.connect(this.filt); this.filt.connect(this.shaper); this.shaper.connect(this.out); this.out.connect(this.mix);
+    this.mix.connect(master); this.mix.connect(this.revSend); this.mix.connect(this.delSend);
+    this.revSend.connect(revIn); this.delSend.connect(delayIn);
+    this.pitchBus=ctx.createConstantSource(); this.pitchBus.offset.value=0; this.pitchBus.start();   // pitch knob + bend, in cents
+    this.vibLfo=ctx.createOscillator(); this.vibLfo.frequency.value=5.5; this.vibGain=ctx.createGain(); this.vibGain.gain.value=0;
+    this.vibLfo.connect(this.vibGain); this.vibLfo.start();
+    this.apply(true); this.sample();
+  }
+  get p(){return S.bass;}
+  kickKit(){return this.p.kick==='kit'?S.drums.kit:(BASS_KICKS[this.p.kick]?this.p.kick:'808');}
+  sample(){const k=this.kickKit(); return this.samples[k]||(this.samples[k]=renderBassKick(k,ctx.sampleRate));}
+  play(midi,vel=1,t=ctx.currentTime){
+    for(const v of this.voices) if(v.t0<t-1e-4&&(v.relT==null||v.relT>t)) v.release(t);   // mono: a new note ends the one before it
+    return new BassVoice(this,midi,t,vel);
+  }
+  apply(shaper){
+    const p=this.p,t=ctx.currentTime;
+    if(shaper) this.updateShaper();
+    this.out.gain.setTargetAtTime(p.volume*(1-0.35*p.drive),t,0.02);
+    this.applyMods();
+  }
+  applyMods(){
+    const p=this.p,m=this.mod,t=ctx.currentTime;
+    this.pitchBus.offset.setTargetAtTime(p.pitch*100+m.bend,t,0.008);
+    this.vibGain.gain.setTargetAtTime(Math.min(1,m.vib)*45,t,0.02);
+    this.revSend.gain.setTargetAtTime(Math.min(1,p.reverb+m.rev),t,0.03);
+    this.delSend.gain.setTargetAtTime(Math.min(1,p.delay+m.del)*0.8,t,0.03);
+    this.filt.frequency.setTargetAtTime(clamp(p.cutoff*m.cut,30,20000),t,0.015);
+    this.filt.Q.setTargetAtTime(clamp(p.resonance+m.res,0,30),t,0.02);
+  }
+  updateShaper(){
+    const d=this.p.drive; if(d<0.005){this.shaper.curve=null; return;}
+    const N=2048,c=new Float32Array(N),k=1+d*14,nk=Math.tanh(k);
+    for(let i=0;i<N;i++){const x=i/(N-1)*2-1; c[i]=Math.tanh(k*x)/nk;}
+    this.shaper.curve=c;
+  }
+  setStick(mode,x,y){
+    const m=this.mod; Object.assign(m,{bend:0,vib:0,cut:1,res:0,rev:0,del:0});
+    if(mode==='bend'){m.bend=x*200; m.vib=Math.max(0,y); if(y<0) m.cut=Math.pow(2,y*4);}
+    else if(mode==='filter'){m.cut=Math.pow(2,x*3); m.res=Math.max(0,y)*14;}
+    else if(mode==='space'){m.del=Math.max(0,x); m.rev=Math.max(0,y); if(x<0) m.cut=Math.pow(2,x*3);}
+    this.applyMods();
+  }
+}
+class BassVoice{
+  constructor(eng,midi,t,vel){
+    const p=eng.p, s=eng.sample();
+    this.eng=eng; this.s=s; this.midi=midi; this.t0=t; this.relT=null; this.released=false;
+    this.att=p.attack; this.hit=p.hit; this.rel=p.release;
+    this.sus=BASS_PEAK*vel; this.peak=this.sus*(1+2.2*p.punch);
+    const src=this.src=ctx.createBufferSource(); src.buffer=s.buf; src.loop=true; src.loopStart=s.ls; src.loopEnd=s.le;
+    src.playbackRate.value=this.rate(midi);
+    eng.pitchBus.connect(src.detune); eng.vibGain.connect(src.detune);
+    this.gain=ctx.createGain(); const g=this.gain.gain;
+    g.setValueAtTime(0,t); g.linearRampToValueAtTime(this.peak,t+this.att);
+    g.setTargetAtTime(this.sus,t+this.att,this.hit/3);                      // punch: falls back to an even sustain
+    src.connect(this.gain); this.gain.connect(eng.input); src.start(t);
+    src.onended=()=>this.dispose();
+    eng.voices.add(this);
+  }
+  rate(midi){return Math.pow(2,(midi-this.s.base)/12);}   // faster playback = higher note
+  levelAt(t){
+    const dt=t-this.t0; if(dt<=0) return 0;
+    if(dt<this.att) return this.peak*dt/this.att;
+    return this.sus+(this.peak-this.sus)*Math.exp(-(dt-this.att)/(this.hit/3));
+  }
+  release(t){
+    t=Math.max(t,ctx.currentTime);
+    if(this.relT!=null&&t>=this.relT) return;   // already ending sooner
+    this.relT=t; this.released=true;
+    const g=this.gain.gain, v=this.levelAt(t);
+    g.cancelScheduledValues(t);
+    if(t<this.t0+this.att) g.linearRampToValueAtTime(v,t); else g.setValueAtTime(v,t);
+    g.setTargetAtTime(0,t,this.rel/4+0.002);
+    try{this.src.stop(t+this.rel*1.7+0.05);}catch(_){}
+  }
+  cancel(){try{this.src.stop();}catch(_){}}
+  kill(t){this.rel=0.01; this.release(t);}
+  setFreq(midi,t,glide){   // legato slide (glide): no new hit
+    this.midi=midi; const pr=this.src.playbackRate;
+    pr.cancelScheduledValues(t); pr.setTargetAtTime(this.rate(midi),t,glide>0?glide/3:0.003);
+  }
+  dispose(){
+    const e=this.eng, dis=(a,b)=>{try{a.disconnect(b);}catch(_){}};
+    dis(e.pitchBus,this.src.detune); dis(e.vibGain,this.src.detune);
+    this.gain.disconnect(); e.voices.delete(this);
+  }
+}
+const BASS_BASE=36;   // C2 octave: the root sits on the O key
+const bassCtl={
+  held:[],v:null,h:null,
+  midiOf(k){return scaleMidi(k-NOTE_OFFSET,BASS_BASE+12*S.bass.octave);},
+  sound(m,tm,noXP){   // a new hit, or a slide when Glide is up and a note is still sounding
+    if(this.v&&!this.v.released&&S.bass.glide>0.001) this.v.setFreq(m,tm.play,S.bass.glide);
+    else this.v=engines.bass.play(m,1,tm.play);
+    liveOff(this.h,tm.log); this.h=liveOn('bass',[m],1,false,noXP,tm);
+    lastPlayed='BASS '+noteName(m);
+  },
+  press(k){this.held=this.held.filter(x=>x!==k); this.held.push(k); this.sound(this.midiOf(k),trigTime(),false);},
+  release(k){
+    this.held=this.held.filter(x=>x!==k);
+    if(!this.v) return;
+    if(this.held.length){const m=this.midiOf(this.held[this.held.length-1]); if(m!==this.v.midi) this.sound(m,trigTime(),true);}   // back to the key still held
+    else{const rt=relAt(this.h?this.h.play:ctx.currentTime); this.v.release(rt); this.v=null; liveOff(this.h,rt); this.h=null;}
+  },
+  panic(){this.held=[]; if(!ctx) return; if(this.v){this.v.release(ctx.currentTime); this.v=null;} liveOff(this.h); this.h=null;}
+};
+function setBassParam(pid,v,opts={}){
+  const P=BASS_PARAMS[pid];
+  if(P){v=clamp(v,P.min,P.max); if(P.step) v=Math.round(v/P.step)*P.step;}
+  S.bass[pid]=v;
+  if(ctx) engines.bass.apply(pid==='drive');
+  if(pid==='octave') renderPadLabels();
+  if(pid==='kick'&&ctx) engines.bass.sample();
+  syncBassUI(); if(!opts.silent) flash(P?`BASS ${P.short} ${P.fmt(v)}`:`BASS KICK ${BASS_KICKS[v].toUpperCase()}`); saveState();
+}
+function syncBassUI(){
+  for(const [pid,P] of Object.entries(BASS_PARAMS)){
+    const r=document.querySelector(`input[data-bpid="${pid}"]`); if(r&&document.activeElement!==r) r.value=Math.round(clamp(toNorm(P,S.bass[pid]),0,1)*1000);
+    const o=document.querySelector(`output[data-bout="${pid}"]`); if(o) o.textContent=P.fmt(S.bass[pid]);
+  }
+  $$('#bassKick button').forEach(b=>b.classList.toggle('active',b.dataset.v===S.bass.kick));
+  refreshKnobs();
+}
+const cardTabs=()=>`<div class="seg cardtabs" title="Switch this card between the Notes and Bass controls"><button data-card="notes">Notes</button><button data-card="bass">Bass</button></div>`;
+function buildBassCard(){
+  let h=`<h3><span class="dot b"></span>Bass engine <span class="tag">right hand · pitched kick</span>${cardTabs()}</h3>`;
+  h+=`<div class="gname">Kick sample${info('bkick')}</div><div class="row"><div class="seg" id="bassKick">${Object.entries(BASS_KICKS).map(([k,v])=>`<button data-v="${k}">${v}</button>`).join('')}</div></div>`;
+  for(const [gname,ids] of BASS_GROUPS){
+    h+=`<div class="grp${gname==='Tone'?' sect':''}"><div class="gname">${gname}</div>`;
+    for(const id of ids) h+=`<div class="sl"><label>${BASS_PARAMS[id].label}${info('b'+id)}</label><input type="range" min="0" max="1000" data-bpid="${id}"><output data-bout="${id}"></output></div>`;
+    h+='</div>';
+  }
+  const opts=Object.entries(BASS_PARAMS).map(([p,P])=>`<option value="${p}">${P.label}</option>`).join('');
+  h+=`<div class="grp sect"><div class="gname">Hardware knobs${info('bknobs')}</div>`;
+  for(const k of [1,2]) h+=`<div class="row"><label>Knob ${k}</label><select data-knobsel="b${k}">${opts}</select></div>`;
+  h+='</div>';
+  $('#card-bass').innerHTML=h;
+  $('#card-notes h3').insertAdjacentHTML('beforeend',cardTabs());
+  $('#bassKick').addEventListener('click',e=>{const b=e.target.closest('button'); if(b){ensureAudio(); setBassParam('kick',b.dataset.v);}});
+  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button[data-card]'); if(b){S.melCard=b.dataset.card; applyCardView(); saveState();}});
+}
+function applyCardView(){
+  const b=S.melCard==='bass';
+  $('#card-notes').style.display=b?'none':''; $('#card-bass').style.display=b?'':'none';
+  $$('button[data-card]').forEach(x=>x.classList.toggle('active',x.dataset.card===S.melCard));
+}
+const RIGHT_MODES=['notes','drums','bass'];
+const nextRightMode=()=>RIGHT_MODES[(RIGHT_MODES.indexOf(S.rightMode)+1)%RIGHT_MODES.length];
 const drumCtl={
   press(k){
     const tm=trigTime(); engines.drums.play(k,1,tm.play); liveOff(liveOn('drums',[k],1,false,false,tm),tm.log+0.01);
@@ -1448,16 +1661,18 @@ function clearCustom(k){
 }
 const sampleLabel=name=>name.replace(/\.[^.]+$/,'');
 function setRightMode(m){
-  allUp(); noteCtl.panic(); S.rightMode=m;
+  allUp(); noteCtl.panic(); bassCtl.panic(); S.rightMode=m;
+  if(m!=='drums') S.melCard=m;   // the Notes / Bass card follows what the right side plays
   applyRightModeUI(); renderPadLabels();
-  flash(m==='drums'?'DRUMS · '+DRUM_KITS[S.drums.kit].toUpperCase():'NOTES'); saveState();
+  flash(m==='drums'?'DRUMS · '+DRUM_KITS[S.drums.kit].toUpperCase():m==='bass'?'BASS · '+BASS_KICKS[S.bass.kick].toUpperCase()+' KICK':'NOTES'); saveState();
 }
 function applyRightModeUI(){
-  $('#padsR').classList.toggle('drums',S.rightMode==='drums');
+  $('#padsR').classList.toggle('drums',S.rightMode==='drums'); $('#padsR').classList.toggle('bass',S.rightMode==='bass');
   $$('#modeSw span').forEach(s=>s.classList.toggle('on',s.dataset.v===S.rightMode));
   $$('#segRight button').forEach(b=>b.classList.toggle('active',b.dataset.v===S.rightMode));
-  $('#btnDrumMode').textContent=S.rightMode==='drums'?'Switch right side back to notes':'Use drums on the right side';
-  refreshKnobs();
+  $('#btnDrumMode').textContent=S.rightMode==='drums'?`Switch right side back to ${S.melCard}`:'Use drums on the right side';
+  applyCardView(); refreshKnobs();
+  if(ctx){engines.notes.setStick('none',0,0); engines.bass.setStick('none',0,0);}
 }
 function setDrumParam(pid,v){
   const P=DRUM_PARAMS[pid]; v=clamp(v,P.min,P.max); if(P.step) v=Math.round(v/P.step)*P.step;
@@ -1485,7 +1700,7 @@ function buildDrumCard(){
   $('#drumSliders').innerHTML=Object.entries(DRUM_PARAMS).map(([pid,P])=>
     `<div class="sl"><label>${P.label}${info('d'+pid)}</label><input type="range" min="0" max="1000" data-dpid="${pid}"><output data-dout="${pid}"></output></div>`).join('');
   $('#selKit').onchange=e=>{S.drums.kit=e.target.value; renderPadLabels(); flash('KIT '+DRUM_KITS[S.drums.kit].toUpperCase()); saveState();};
-  $('#btnDrumMode').onclick=()=>{ensureAudio(); setRightMode(S.rightMode==='drums'?'notes':'drums');};
+  $('#btnDrumMode').onclick=()=>{ensureAudio(); setRightMode(S.rightMode==='drums'?(S.melCard||'notes'):'drums');};
   let pending=0;
   $('#drumList').addEventListener('click',e=>{
     const b=e.target.closest('button'); if(!b) return;
@@ -1494,14 +1709,14 @@ function buildDrumCard(){
     else if(b.dataset.dclear!==undefined) clearCustom(+b.dataset.dclear);
   });
   $('#drumFile').onchange=e=>{const f=e.target.files[0]; if(f) loadCustom(pending,f); e.target.value='';};
-  $('#modeSw').addEventListener('click',()=>{ensureAudio(); setRightMode(S.rightMode==='drums'?'notes':'drums');});   // a tap anywhere on the switch flips it
+  $('#modeSw').addEventListener('click',e=>{ensureAudio(); const sp=e.target.closest('span[data-v]'); setRightMode(sp?sp.dataset.v:nextRightMode());});   // click a position, or the gap to step to the next
   $$('#segRight button').forEach(b=>b.onclick=()=>{ensureAudio(); setRightMode(b.dataset.v);});
   window.addEventListener('dragover',e=>e.preventDefault());
   window.addEventListener('drop',e=>e.preventDefault());
 }
 
 /* pad down bookkeeping so mouse + keyboard on same pad don't double-trigger */
-const ctlFor=side=>side==='c'?chordCtl:(S.rightMode==='drums'?drumCtl:noteCtl);
+const ctlFor=side=>side==='c'?chordCtl:(S.rightMode==='drums'?drumCtl:S.rightMode==='bass'?bassCtl:noteCtl);
 const downCount={c:new Array(7).fill(0),n:new Array(11).fill(0)};
 function padDown(side,k){
   ensureAudio();
@@ -1517,7 +1732,7 @@ function padUp(side,k){
 }
 function allUp(){['c','n'].forEach(s=>{for(let k=0;k<downCount[s].length;k++){downCount[s][k]=Math.min(downCount[s][k],1);padUp(s,k);}});}
 function panic(){
-  allUp(); chordCtl.panic(); noteCtl.panic(); midi.held.forEach((_,k)=>releaseMidi(k));
+  allUp(); chordCtl.panic(); noteCtl.panic(); bassCtl.panic(); midi.held.forEach((_,k)=>releaseMidi(k));
   if(ctx) Object.values(engines).forEach(e=>e.voices.forEach(v=>v.release(ctx.currentTime)));
 }
 
@@ -1578,7 +1793,7 @@ function renderPadLabels(){
       const c=storedSamples['pad'+k];
       n.querySelector('.nm').textContent=DRUM_SHORT[k]; n.querySelector('.sub').textContent=c?sampleLabel(c.name):DRUM_KITS[S.drums.kit];
     }else{
-      const m=noteCtl.midiOf(k); n.querySelector('.nm').textContent=pcName(m); n.querySelector('.sub').textContent=noteName(m);
+      const m=(S.rightMode==='bass'?bassCtl:noteCtl).midiOf(k); n.querySelector('.nm').textContent=pcName(m); n.querySelector('.sub').textContent=noteName(m);
       n.classList.toggle('root',((m-S.root)%12+12)%12===0);
     }
   }
@@ -1587,14 +1802,15 @@ function renderPadLabels(){
 function knobEngine(kid){return kid[0]==='c'?'chords':'notes';}
 const DRUM_KNOBS={n1:'cutoff',n2:'resonance'};   // right-hand knobs while the right side plays drums
 function knobTarget(kid){
-  if(kid[0]==='n'&&S.rightMode==='drums'){const pid=DRUM_KNOBS[kid],P=DRUM_PARAMS[pid]; return {P,drum:true,get:()=>S.drums[pid],set:v=>setDrumParam(pid,v)};}
-  const en=knobEngine(kid),pid=S.knobs[kid],P=PARAMS[pid]; return {P,drum:false,get:()=>S[en][pid],set:v=>setParam(en,pid,v)};
+  if(kid[0]==='n'&&S.rightMode==='drums'){const pid=DRUM_KNOBS[kid],P=DRUM_PARAMS[pid]; return {P,kind:'drum',get:()=>S.drums[pid],set:v=>setDrumParam(pid,v)};}
+  if(kid[0]==='n'&&S.rightMode==='bass'){const pid=BASS_PARAMS[S.knobs['b'+kid[1]]]?S.knobs['b'+kid[1]]:'cutoff',P=BASS_PARAMS[pid]; return {P,kind:'bass',get:()=>S.bass[pid],set:v=>setBassParam(pid,v)};}
+  const en=knobEngine(kid),pid=S.knobs[kid],P=PARAMS[pid]; return {P,kind:'',get:()=>S[en][pid],set:v=>setParam(en,pid,v)};
 }
 function refreshKnobs(){
   $$('.knob').forEach(el=>{
     const kt=knobTarget(el.dataset.knob),P=kt.P;
     const n=clamp(toNorm(P,kt.get()),0,1);
-    el.classList.toggle('drumk',kt.drum);
+    el.classList.toggle('drumk',kt.kind==='drum'); el.classList.toggle('bassk',kt.kind==='bass');
     el.style.setProperty('--v',n);
     el.querySelector('.ind').style.transform=`rotate(${-135+n*270}deg)`;
     el.querySelector('.klabel').textContent=P.short;
@@ -1635,7 +1851,7 @@ function setStick(side,x,y){
   stickPos[side]={x,y};
   const cap=$('#stick'+side+' .cap'); cap.style.setProperty('--x',(x*20)+'px'); cap.style.setProperty('--y',(-y*20)+'px');
   if(!ctx) return;
-  const mode=side==='L'?S.stickL:S.stickR, eng=side==='L'?engines.chords:engines.notes;
+  const mode=side==='L'?S.stickL:S.stickR, eng=side==='L'?engines.chords:(S.rightMode==='bass'?engines.bass:engines.notes);
   if(mode==='variation'){
     const d=dirFrom(x,y);
     if(d!==chordCtl.variation){chordCtl.variation=d; chordCtl.revoice(); if(d!=='none') flash('CHORD '+VARS[d].name,900);}
@@ -1654,7 +1870,7 @@ function setupSticks(){
 function applyStickModes(){
   $('#stickL .slabel').textContent=STICK_MODES[S.stickL];
   $('#stickR .slabel').textContent=STICK_MODES[S.stickR];
-  if(ctx){engines.chords.setStick('none',0,0); engines.notes.setStick('none',0,0);}
+  if(ctx){engines.chords.setStick('none',0,0); engines.notes.setStick('none',0,0); engines.bass.setStick('none',0,0);}
   chordCtl.variation='none'; chordCtl.revoice();
 }
 
@@ -1687,8 +1903,8 @@ document.addEventListener('keydown',e=>{
   switch(e.code){
     case 'KeyZ': ensureAudio(); setParam('chords','octave',S.chords.octave-1); break;
     case 'KeyX': ensureAudio(); setParam('chords','octave',S.chords.octave+1); break;
-    case 'KeyN': ensureAudio(); setParam('notes','octave',S.notes.octave-1); renderPadLabels(); break;
-    case 'KeyM': ensureAudio(); setParam('notes','octave',S.notes.octave+1); renderPadLabels(); break;
+    case 'KeyN': ensureAudio(); if(S.rightMode==='bass') setBassParam('octave',S.bass.octave-1); else setParam('notes','octave',S.notes.octave-1); renderPadLabels(); break;
+    case 'KeyM': ensureAudio(); if(S.rightMode==='bass') setBassParam('octave',S.bass.octave+1); else setParam('notes','octave',S.notes.octave+1); renderPadLabels(); break;
     case 'Minus': ensureAudio(); setRoot(S.root-1); break;
     case 'Equal': ensureAudio(); setRoot(S.root+1); break;
     case 'Digit1': e.preventDefault(); transport('rec'); break;
@@ -1699,7 +1915,7 @@ document.addEventListener('keydown',e=>{
     case 'KeyT': transport('tap'); break;
     case 'Digit0': ensureAudio(); clearHold.start(); break;
     case 'Backquote': cycleArp(); break;
-    case 'Backslash': ensureAudio(); setRightMode(S.rightMode==='drums'?'notes':'drums'); break;
+    case 'Backslash': ensureAudio(); setRightMode(nextRightMode()); break;
     default: ensureAudio();
   }
 });
@@ -1892,6 +2108,21 @@ const HELP={
   dcutoff:['Drum cutoff','A low-pass filter on the whole kit. Turn it down for muffled, filtered builds. Also on the right-hand knob in drum mode.'],
   dresonance:['Drum resonance','Adds a peak at the drum filter\'s cutoff for squelchy sweeps.'],
   dreverb:['Drum reverb (send)','How much of the kit goes into the shared reverb.'],
+  bkick:['Kick sample','Which kick drum the bass is made from. 808 is the classic long, round 808 bass; Acoustic is tighter and woodier; Lo-Fi is crunchy. Drum kit follows the kit chosen in the Drums card.'],
+  bvolume:['Bass volume','How loud the bass is, as part of its sound. Use the BASS knob in the MIX section to balance it against the other instruments.'],
+  boctave:['Bass octave','Shifts the bass up or down by whole octaves (also N / M while the right side plays bass). The kick is pitched by playing it faster or slower, so very high notes get short and clicky.'],
+  bpitch:['Bass pitch','Transposes the bass in semitones.'],
+  bpunch:['Punch','How hard the hit at the start of each note jumps above the held level. 0% is a flat, even note; high values give a hard, clubby thump.'],
+  bhit:['Hit length','How quickly the punch falls back to the steady sustain. Short is tight and clicky, long is a boomier attack.'],
+  battack:['Attack','Fade-in at the start of each note. Keep it short so the bass lands with the kick.'],
+  brelease:['Release','How long the bass rings after you let go. Keep it short for a tight line.'],
+  bglide:['Glide','When up, playing a new note while one is still held slides to it instead of hitting again: the classic 808 slide. At 0 every note gets its own hit.'],
+  bcutoff:['Tone','A low-pass filter on the bass. Lower is rounder and sub-heavy, higher keeps the click and growl.'],
+  bresonance:['Resonance','Boosts the frequencies at the Tone cutoff for a squelchier bass.'],
+  bdrive:['Drive','Saturation. Adds harmonics so the bass is heard on small speakers and phones.'],
+  breverb:['Reverb (send)','How much bass goes into the shared reverb. Usually best kept low.'],
+  bdelay:['Delay (send)','How much bass goes into the shared echo.'],
+  bknobs:['Hardware knobs','What the two right-hand knobs on the device control while the right side plays bass.'],
   loops:['Saved loops','Save the current loop (all its layers, tempo and key, plus the sounds and mix) to a slot, and load it back any time. Loading while a loop is playing starts the new one right away. Export / Import backs your loops up to a file.'],
   pads:['Pads','Each drum\'s own level (0–200%), a preview button, and Load to put your own audio file on that pad (or drop a file onto the pad itself). ✕ goes back to the built-in sound.']
 };
@@ -1970,7 +2201,7 @@ function syncGlobalUI(){
 }
 function syncAll(){
   for(const en of ['chords','notes']){for(const pid in PARAMS) syncParamUI(en,pid); ['wave','filterType','moog','arp','farp','farpTrig'].forEach(p=>syncParamUI(en,p));}
-  syncGlobalUI(); renderPadLabels(); refreshKnobs(); applyStickModes(); syncDrumUI(); applyRightModeUI();
+  syncGlobalUI(); renderPadLabels(); refreshKnobs(); applyStickModes(); syncDrumUI(); syncBassUI(); applyRightModeUI();
 }
 function buildPanel(){
   $('#selRoot').innerHTML=NOTE_NAMES.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
@@ -1979,12 +2210,13 @@ function buildPanel(){
   $('#selStickR').innerHTML=Object.entries(STICK_MODES).filter(([k])=>k!=='variation').map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
   $('#selDelayDiv').innerHTML=Object.keys(DELAY_DIVS).map(d=>`<option>${d}</option>`).join('');
   $('#selFactory').innerHTML='<option value="">— choose a preset —</option>'+FACTORY.map((p,i)=>`<option value="${i}">${String(i+1).padStart(2,'0')} · ${p[0]}</option>`).join('');
-  buildEngineCard('chords'); buildEngineCard('notes'); buildDrumCard();
+  buildEngineCard('chords'); buildEngineCard('notes'); buildDrumCard(); buildBassCard();
 
   document.addEventListener('input',e=>{
     const t=e.target;
     if(t.dataset.pid){ensureAudio(); setParam(t.dataset.en,t.dataset.pid,fromNorm(PARAMS[t.dataset.pid],t.value/1000));}
     if(t.dataset.dpid){ensureAudio(); setDrumParam(t.dataset.dpid,fromNorm(DRUM_PARAMS[t.dataset.dpid],t.value/1000));}
+    if(t.dataset.bpid){ensureAudio(); setBassParam(t.dataset.bpid,fromNorm(BASS_PARAMS[t.dataset.bpid],t.value/1000));}
     if(t.dataset.dlevel!==undefined){const k=+t.dataset.dlevel; if(!Array.isArray(S.drums.levels)) S.drums.levels=new Array(11).fill(1); S.drums.levels[k]=t.value/100;
       document.querySelector(`[data-dlout="${k}"]`).textContent=t.value+'%'; flash(`${DRUM_SHORT[k]} LEVEL ${t.value}%`); saveState();}
   });
@@ -2173,7 +2405,7 @@ function drawLoopPage(g,now){
       g.fillRect(x,11,1,st!=='rec'&&q%phraseB===0?3:2); g.fillRect(x,40,1,2);
     }else if(128/LB>=3) g.fillRect(x,11,1,1);
   }
-  const lanes={chords:44,notes:47,drums:50};
+  const lanes={chords:42,notes:45,bass:48,drums:51};
   for(const ev of looper.events){
     const t=looper.track(ev.layer); if(t&&t.muted) continue;
     const TL=looper.trackLen(ev.layer); if(ev.tb>=TL) continue;
@@ -2192,7 +2424,7 @@ function drawMiniBar(g){
   g.fillStyle='#000'; for(let b=4;b<LB;b+=4) g.fillRect(Math.round(b/LB*128),54,1,1); g.fillStyle='#dffcff';
 }
 const loopCv=$('#loopCanvas'), lcg=loopCv.getContext('2d');
-const LANE_COL={chords:'#2fe0c0',notes:'#ff5fa2',drums:'#ffb23f'}, ENG_ORDER=['chords','notes','drums'], ENG_NAME={chords:'Chords',notes:'Notes',drums:'Drums'};
+const LANE_COL={chords:'#2fe0c0',notes:'#ff5fa2',bass:'#4c9cff',drums:'#ffb23f'}, ENG_ORDER=['chords','notes','bass','drums'], ENG_NAME={chords:'Chords',notes:'Notes',bass:'Bass',drums:'Drums'};
 const TL_GUT=142, TL_TOP=15, TL_AMP=26;
 let tlLayout=null, tlDrag=null;   // geometry of the last drawn timeline (for mouse hits), note being dragged
 function trackRows(){   // one row per track that has notes (plus the one being recorded)
@@ -2405,12 +2637,12 @@ const FACTORY=[
  ['Everything Dial',{c:{wave:'hollow',drive:0.3,fold:0.3,crush:0.2,chorus:0.6,tremolo:0.3,reverb:0.5,delay:0.3,cutoff:4000,resonance:6},n:{wave:'supersaw',fm:0.2,fmRatio:2,vibrato:0.2,delay:0.4,reverb:0.4,glide:0.05}}],
 ];
 const PRESET_GLOBALS=['noteMode','delayDiv','delayFb','revSize'];
-function applyPreset(name,c,n,g){
+function applyPreset(name,c,n,g,b){
   panic();
   const keepArp={}; ARP_KEYS.forEach(k=>keepArp[k]=S.chords[k]);   // the arp is a performance setting, not part of the sound
-  S.chords={...defaultEngine(),...keepArp,...c}; S.notes={...defaultEngine(),...n};
+  S.chords={...defaultEngine(),...keepArp,...c}; S.notes={...defaultEngine(),...n}; if(b) S.bass={...defaultBass(),...b};
   const base=DEFAULT_STATE(); PRESET_GLOBALS.forEach(k=>S[k]=(g&&g[k]!==undefined)?g[k]:base[k]);
-  if(ctx){engines.chords.applyAll(true); engines.notes.applyAll(true); updateDelay(); reverb.buffer=makeIR(S.revSize);}
+  if(ctx){engines.chords.applyAll(true); engines.notes.applyAll(true); engines.bass.apply(true); updateDelay(); reverb.buffer=makeIR(S.revSize);}
   syncAll(); flash(name.toUpperCase(),1800); saveState();
 }
 function loadFactory(i){const [name,p]=FACTORY[i]; applyPreset(name,p.c,p.n,p.g);}
@@ -2429,7 +2661,7 @@ function snapshotLoop(name){
     ops:looper.ops.map(o=>({...o})),opSeq:looper.opSeq,
     events:looper.events.filter(e=>e.durB!=null).map(e=>({eng:e.eng,midis:[...e.midis],vel:e.vel,tb:+e.tb.toFixed(4),durB:+e.durB.toFixed(4),layer:e.layer,arp:!!e.arp})),
     amp:Array.from(looper.amp.slice(0,n),v=>+v.toFixed(3)),
-    sound:{chords:{...S.chords},notes:{...S.notes},drums:{...S.drums,levels:[...(S.drums.levels||[])]},mix:{...S.mix},
+    sound:{chords:{...S.chords},notes:{...S.notes},bass:{...S.bass},drums:{...S.drums,levels:[...(S.drums.levels||[])]},mix:{...S.mix},
       noteMode:S.noteMode,delayDiv:S.delayDiv,delayFb:S.delayFb,revSize:S.revSize}};
 }
 // loops saved before tracks had their own length: Multiply copied notes into a new layer. Now tracks repeat instead,
@@ -2454,8 +2686,9 @@ function loadLoop(L){
     S.chords={...defaultEngine(),...L.sound.chords,...keepArp}; S.notes={...defaultEngine(),...L.sound.notes};
     S.drums={...S.drums,...L.sound.drums}; S.mix={...S.mix,...L.sound.mix};
     ['noteMode','delayDiv','delayFb','revSize'].forEach(k=>{if(L.sound[k]!==undefined) S[k]=L.sound[k];});
-    engines.chords.applyAll(true); engines.notes.applyAll(true); engines.drums.apply();
-    ['chords','notes','drums'].forEach(en=>engines[en].mix.gain.setTargetAtTime(S.mix[en],ctx.currentTime,0.02));
+    if(L.sound.bass) S.bass={...defaultBass(),...L.sound.bass};
+    engines.chords.applyAll(true); engines.notes.applyAll(true); engines.drums.apply(); engines.bass.apply(true);
+    ['chords','notes','bass','drums'].forEach(en=>engines[en].mix.gain.setTargetAtTime(S.mix[en]??1,ctx.currentTime,0.02));
     updateMetroGain(); reverb.buffer=makeIR(S.revSize); renderMix();
   }
   looper.setBpm(L.bpm);
@@ -2534,9 +2767,9 @@ function renderSlots(){
       if(saveMode){
         const name=(prompt('Preset name:',s?s.name:`User ${i+1}`)||'').trim(); if(!name) return;
         const g={}; PRESET_GLOBALS.forEach(k=>g[k]=S[k]);
-        userSlots[i]={name,c:{...S.chords},n:{...S.notes},g}; store.set('gammaweb-ui.user',userSlots);
+        userSlots[i]={name,c:{...S.chords},n:{...S.notes},b:{...S.bass},g}; store.set('gammaweb-ui.user',userSlots);
         saveMode=false; renderSlots(); flash('SAVED '+name.toUpperCase());
-      }else if(s){ensureAudio(); applyPreset(s.name,s.c,s.n,s.g);}
+      }else if(s){ensureAudio(); applyPreset(s.name,s.c,s.n,s.g,s.b);}
     };
     host.appendChild(b);
   });
@@ -2572,7 +2805,7 @@ function onMidiMsg(e){
     if(cmd===0x90&&d2>0&&k>=0){engines.drums.play(k,0.3+0.7*d2/127); liveOff(liveOn('drums',[k],d2/127,true)); lastPlayed=DRUM_SHORT[k];}
     return;
   }
-  const eng=ch===1?'chords':'notes', key=ch+':'+d1;
+  const eng=ch===1?'chords':ch===2?'bass':'notes', key=ch+':'+d1;   // channel 1 notes · 2 chords · 3 bass · 10 drums
   if(cmd===0x90&&d2>0){
     releaseMidi(key);
     const vel=d2/127, v=engines[eng].play(d1,0.35+0.65*vel);
@@ -2587,7 +2820,7 @@ function onMidiMsg(e){
 }
 function midiSend(eng,midis,on,vel,ts){
   if(!midi.out) return;
-  const ch=eng==='drums'?9:eng==='chords'?1:0;
+  const ch=eng==='drums'?9:eng==='chords'?1:eng==='bass'?2:0;
   if(eng==='drums') midis=midis.map(k=>DRUM_GM[k]);
   try{midis.forEach(m=>midi.out.send([(on?0x90:0x80)|ch,clamp(m,0,127),on?clamp(Math.round(vel*127),1,127):0],ts));}catch(_){}
 }
@@ -2610,6 +2843,7 @@ function frame(){
     if(!SCALES[S.scale]) S.scale='Major';
     S.drums={...base.drums,...(saved.drums||{})}; if(!DRUM_KITS[S.drums.kit]) S.drums.kit='808';
     S.mix={...base.mix,...(saved.mix||{})};
+    S.bass={...defaultBass(),...(saved.bass||{})}; if(!RIGHT_MODES.includes(S.rightMode)) S.rightMode='notes'; if(!['notes','bass'].includes(S.melCard)) S.melCard='notes';
     if(!(saved.knobRev>=2)){S.knobs.c2='resonance'; S.knobs.n2='resonance'; S.knobRev=2;}   // one-time move: knob 2 on each side -> resonance
   }else{
     const [,p]=FACTORY[0]; S.chords={...defaultEngine(),...p.c}; S.notes={...defaultEngine(),...p.n};
