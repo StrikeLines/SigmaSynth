@@ -826,7 +826,7 @@ const gridOn=()=>looper.clockRunning()&&!looper.gridless;   // is there a beat g
 const fmtBpm=v=>{const r=Math.round(v*10)/10; return Number.isInteger(r)?String(r):r.toFixed(1);};
 function trigTime(){
   const now=ctx.currentTime;
-  if(!gridOn()||(looper.state==='armed'&&S.loopMode==='free'&&!looper.tempoKnown)) return {play:now,log:now};
+  if(!gridOn()||(looper.state==='armed'&&S.loopMode==='free'&&!looper.tempoKnown&&!looper.metro)) return {play:now,log:now};   // a running metronome counts as a known tempo
   const B=looper.beat, p=(now-looper.start)/B;
   const sp=looper.state==='armed'?Math.round(p):snapBeat(p);   // armed with the metronome on: the loop starts on the nearest click
   const log=looper.start+sp*B;
@@ -933,16 +933,18 @@ const looper={
   /* ---- state changes ---- */
   beginRec(at){
     const now=ctx.currentTime;
-    this.start=at??now; this.schedFrom=now; this.state='rec'; this.events=[]; this.amp.fill(0); this.ampLast=-1;
+    this.start=at??now; this.schedFrom=Math.max(now,this.schedFrom); this.state='rec';   // clicks already queued sit on the same grid: don't queue them twice this.events=[]; this.amp.fill(0); this.ampLast=-1;
     this.layer=++this.opSeq; this.ops=[{type:'layer',id:this.layer}];
     this.free=S.loopMode==='free'; this.freeLoop=false; this.gridTaps=[];
+    this.clickTake=this.free&&this.metro; if(this.clickTake) this.tempoKnown=true;   // recording to the click: keep the click going and keep its tempo
     flash('● RECORDING'); updateTransport();
   },
   endFirst(){this.free?this.closeFree():this.finishFirst();},
   closeFree(){   // free take ends where you pressed: work out bars + tempo, then lock everything to that grid
-    const now=ctx.currentTime, L=Math.max(0.25,now-this.start), B0=this.beat;
-    let g;
-    if(this.tempoKnown){const N=clamp(Math.round(L/(4*B0)),1,MAX_BARS); g={N,bpm:240*N/L};}
+    const now=ctx.currentTime, B0=this.beat;
+    let L=Math.max(0.25,now-this.start), g;
+    if(this.clickTake){const N=clamp(Math.round(L/(4*B0)),1,MAX_BARS); g={N,bpm:S.bpm}; L=N*4*B0;}   // played to the click: whole bars at the click's tempo
+    else if(this.tempoKnown){const N=clamp(Math.round(L/(4*B0)),1,MAX_BARS); g={N,bpm:240*N/L};}
     else{
       const on=[]; this.events.map(e=>e.tb*B0).sort((a,b)=>a-b).forEach(t=>{if(t<L-0.03&&(!on.length||t-on[on.length-1]>0.03)) on.push(t);});
       g=detectGrid(L,on);
@@ -1069,7 +1071,7 @@ const looper={
   clear(keepLength){
     if(ctx&&this.playing) this.silenceScheduled();
     this.events=[]; this.ops=[]; this.state='empty'; if(!keepLength) this.bars=1; this.phrase=1; this.amp.fill(0); this.taps=[]; this.lastPos=0;
-    this.free=false; this.freeLoop=false; this.tempoKnown=false; this.gridTaps=[];
+    this.free=false; this.freeLoop=false; this.tempoKnown=false; this.clickTake=false; this.gridTaps=[];
   }
 };
 function schedulePlay(ev,at,dur){
