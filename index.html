@@ -372,7 +372,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <b>Loop timeline:</b> each overdub is a track row. Click a row's switch to turn it on/off; click its length (right-click to go back) to make it shorter or longer. A track shorter than the loop repeats to fill it, and Multiply repeats every track instead of copying notes. Click a note to select it, then drag it or press <kbd>←</kbd>/<kbd>→</kbd> to move it a beat (<kbd>Shift</kbd> = one quantize step); <kbd>Delete</kbd> or <kbd>Backspace</kbd> removes it, <kbd>Esc</kbd> deselects. While a note is selected those keys act on the note; otherwise they do their usual jobs. Set <b>New track</b> to record a short track that repeats.<br>
       <b>Arpeggiator:</b> click the ARP switch at the top left or press <kbd>`</kbd> to cycle Off → Up → Down → Random. Hold a chord and it plays the chord's notes one at a time. Set rate, gate and octaves in the Chords engine card.<br>
       <b>Drums:</b> press <kbd>\</kbd> or use the NOTES / DRUMS / BASS switch at the top right to turn the right-hand pads into an 11-piece drum kit. The same keys play it.<br>
-      <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. It is mono, so a new note cuts the last one; turn up Glide to slide between notes. <kbd>,</kbd>/<kbd>.</kbd> change its octave. Set <b>Pads</b> to <b>Follow chord</b> in the Bass card and the pads play the whole scale of whatever chord is sounding, starting from its root on O (the chord's own notes are outlined). Hold a pad and the bass follows every chord change you play, or the loop's chords when you're not holding one.<br>
+      <b>Bass:</b> the third right-hand mode (<kbd>\</kbd> cycles Notes → Drums → Bass). The pads play a pitched, held 808-style kick: the hit plays once, then the tone sustains while you hold the key. Overlapping notes all keep sounding (up to 4); turn up Glide to slide each new note in from the one you hold. <kbd>,</kbd>/<kbd>.</kbd> change its octave. Set <b>Pads</b> to <b>Follow chord</b> in the Bass card and the pads play the whole scale of whatever chord is sounding, starting from its root on O (the chord's own notes are outlined). Hold a pad and the bass follows every chord change you play, or the loop's chords when you're not holding one.<br>
       <b>Knobs:</b> drag up/down or use the mouse wheel. Double-click resets. Choose what each knob controls in the engine cards.
     </div>
   </section>
@@ -383,7 +383,6 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
       <div>
         <div class="gname">Global</div>
         <div class="row"><label>Right side</label><div class="seg" id="segRight"><button data-v="notes">Notes</button><button data-v="drums">Drums</button><button data-v="bass">Bass</button></div></div>
-        <div class="row"><label>Note mode</label><div class="seg" id="segMode"><button data-v="mono">Mono</button><button data-v="poly">Poly (4)</button></div></div>
         <div class="sl"><label>Master</label><input type="range" id="master" min="0" max="1000"><output id="masterOut"></output></div>
         <div class="row"><button id="btnPanic">All notes off</button><span class="small" id="latency"></span></div>
       </div>
@@ -582,6 +581,7 @@ function updateDelay(){
 class Engine{
   constructor(name,peak){
     this.name=name; this.peak=peak; this.voices=new Set();
+    this.lock=name==='notes';   // phase lock: a new note starts in step with the note already sounding (see Voice)
     this.mod={bend:0,vib:0,cut:1,res:0,rev:0,del:0};
     this.input=ctx.createGain();
     this.fA=ctx.createBiquadFilter(); this.fB=ctx.createBiquadFilter();
@@ -611,6 +611,11 @@ class Engine{
   }
   get p(){return S[this.name];}
   play(midi,vel=1,t=ctx.currentTime){this.farpTrigger(t); return new Voice(this,midi,t,vel);}
+  anchorAt(T){   // the oldest phase-tracked voice still sounding at time T
+    let best=null;
+    for(const v of this.voices) if(v.ph&&v.t0<=T&&!(v.relT<=T)&&(!best||v.t0<best.t0)) best=v;
+    return best;
+  }
   applyAll(shaper){
     const p=this.p,t=ctx.currentTime;
     if(shaper) this.updateShaper();
@@ -698,9 +703,28 @@ class Engine{
   }
 }
 
+/* Phase lock (notes engine). Two notes close in pitch beat against each other, and the beat's shape depends on where
+   each waveform is in its cycle when the second note starts: a few ms of timing changes it completely. So when a note
+   starts while another is sounding, every oscillator (main, detuned copies, octave layers, FM) is spun forward during a
+   1.3 ms silent lead-in until it is exactly in step with the matching oscillator of the oldest sounding note. The same
+   notes then make the same beat pattern every time, however your timing falls. */
+const LOCK_N=64;   // samples of silent lead-in used to line the phase up (~1.3 ms)
 class Voice{
   constructor(eng,midi,t,vel){
-    const p=eng.p; this.eng=eng; this.midi=midi; this.t0=t; this.released=false;
+    const p=eng.p; this.eng=eng; this.midi=midi; this.released=false;
+    const lock=!!eng.lock, sr=ctx.sampleRate, tS=lock?Math.ceil(t*sr/128-1e-6)*128/sr:t, tB=lock?tS+LOCK_N/sr:t;   // start on a 128-sample block: Chrome only applies the lead-in exactly from a block start
+    this.t0=tB; this.tB=tB; this.ph=lock?{}:null;
+    const anchor=lock?eng.anchorAt(tB):null, pf=Math.pow(2,p.pitch/12);
+    const lockOsc=(o,role,hz,cents)=>{   // line oscillator o up with the anchor's matching oscillator at tB, and track its phase
+      if(!lock) return;
+      const k=Math.pow(2,cents/1200)*pf, fe=hz*k;   // fe: the Hz it really runs at (detune and the engine's pitch included)
+      let ph=fe*(tB-tS);
+      if(anchor&&anchor.ph[role]){
+        const want=anchor.phaseAt(role,tB), extra=((want-ph)%1+1)%1;
+        o.frequency.setValueAtTime(hz+extra*sr/LOCK_N/k,tS); o.frequency.setValueAtTime(hz,tB); ph=want;
+      }
+      this.ph[role]={t0:tB,ph0:ph,f0:fe,f1:fe,tc:0,k:fe/mtof(midi)};
+    };
     this.env={attack:Math.max(0.002,p.attack),decay:p.decay,sustain:p.sustain,release:p.release};
     this.peak=eng.peak*vel;
     this.gain=ctx.createGain(); this.gain.gain.value=0; this.gain.connect(eng.input);
@@ -715,8 +739,9 @@ class Voice{
       if(w==='supersaw') o.type='sawtooth'; else if(periodic[w]) o.setPeriodicWave(periodic[w]); else o.type=w;
       o.frequency.value=f;
       o.detune.value=n===1?0:(w==='supersaw'?(i-1)*(p.detune+12):(i?1:-1)*p.detune/2);
+      lockOsc(o,'o'+i,f,o.detune.value);
       eng.pitchBus.connect(o.detune); eng.vibGain.connect(o.detune); this.modGain.connect(o.frequency);
-      o.connect(mix); o.start(t); this.oscs.push(o);
+      o.connect(mix); o.start(tS); this.oscs.push(o);
     }
     this.layers=[];
     for(const L of LAYERS){
@@ -724,14 +749,16 @@ class Voice{
       const o=ctx.createOscillator();
       if(w==='supersaw') o.type='sawtooth'; else if(periodic[w]) o.setPeriodicWave(periodic[w]); else o.type=w;
       o._ratio=L.ratio; o.frequency.value=f*L.ratio; o.detune.value=L.sign*p.layerSpread;
+      lockOsc(o,'L'+L.id,f*L.ratio,o.detune.value);
       eng.pitchBus.connect(o.detune); eng.vibGain.connect(o.detune);
       const lg=ctx.createGain(); lg.gain.value=lvl*LAYER_GAIN; o.connect(lg); lg.connect(this.gain);
-      o.start(t); this.oscs.push(o); this.layers.push({L,o,g:lg});
+      o.start(tS); this.oscs.push(o); this.layers.push({L,o,g:lg});
     }
-    this.mod.start(t);
+    lockOsc(this.mod,'m',f*p.fmRatio,0);
+    this.mod.start(tS);
     const g=this.gain.gain, e=this.env;
-    g.setValueAtTime(0,t); g.linearRampToValueAtTime(this.peak,t+e.attack);
-    g.setTargetAtTime(this.peak*e.sustain,t+e.attack,Math.max(0.005,e.decay/3));
+    g.setValueAtTime(0,tB); g.linearRampToValueAtTime(this.peak,tB+e.attack);
+    g.setTargetAtTime(this.peak*e.sustain,tB+e.attack,Math.max(0.005,e.decay/3));
     this.oscs[0].onended=()=>this.dispose();
     eng.voices.add(this);
   }
@@ -741,9 +768,14 @@ class Voice{
     if(dt<e.attack) return this.peak*dt/e.attack;
     return this.peak*(e.sustain+(1-e.sustain)*Math.exp(-(dt-e.attack)/Math.max(0.005,e.decay/3)));
   }
+  phaseAt(role,T){   // where a tracked oscillator is in its cycle at time T (0..1), glides included
+    const s=this.ph[role], dt=Math.max(0,T-s.t0);
+    let ph=s.ph0+s.f1*dt; if(s.tc>0) ph+=(s.f0-s.f1)*s.tc*(1-Math.exp(-dt/s.tc));
+    return ph-Math.floor(ph);
+  }
   release(t){
     if(this.released) return; this.released=true;
-    t=Math.max(t,ctx.currentTime);
+    t=Math.max(t,ctx.currentTime); this.relT=t;
     const g=this.gain.gain, v=this.levelAt(t);
     g.cancelScheduledValues(t);
     if(t<this.t0+this.env.attack) g.linearRampToValueAtTime(v,t); else g.setValueAtTime(v,t);
@@ -757,12 +789,19 @@ class Voice{
     g.cancelScheduledValues(t);
     if(t<this.t0+this.env.attack) g.linearRampToValueAtTime(v,t); else g.setValueAtTime(v,t);
     g.linearRampToValueAtTime(0,t+0.012);
-    this.released=true;
+    this.released=true; this.relT=Math.min(this.relT??Infinity,t);
     const stop=t+0.03; this.oscs.forEach(o=>{try{o.stop(stop);}catch(_){}}); try{this.mod.stop(stop);}catch(_){}
   }
   setFreq(midi,t,glide){
     this.midi=midi;
     const f=mtof(midi),tc=glide>0?glide/3:0.004,p=this.eng.p;
+    if(this.ph){   // phase-locked voice: never touch the lead-in, and keep tracking the phase through the glide
+      t=Math.max(t,this.tB+0.5/ctx.sampleRate);
+      for(const [role,s] of Object.entries(this.ph)){
+        const dt=Math.max(0,t-s.t0), fNow=s.tc>0?s.f1+(s.f0-s.f1)*Math.exp(-dt/s.tc):s.f1;
+        this.ph[role]={...s,ph0:this.phaseAt(role,t),t0:t,f0:fNow,f1:f*s.k,tc};
+      }
+    }
     this.oscs.forEach(o=>{o.frequency.cancelScheduledValues(t);o.frequency.setTargetAtTime(f*(o._ratio||1),t,tc);});
     this.mod.frequency.cancelScheduledValues(t); this.mod.frequency.setTargetAtTime(f*p.fmRatio,t,tc);
     this.modGain.gain.setTargetAtTime(p.fm*f*p.fmRatio*3,t,tc);
@@ -941,7 +980,7 @@ const looper={
     if(tb<0) tb=0;
     const cyc=c*R+r, key=midis.join(',');   // cyc: the pass this note was played in, so playback doesn't double it
     if(this.events.some(e=>e.eng===eng&&e.layer===this.layer&&Math.abs(e.tb-tb)<0.02&&e.midis.join(',')===key)) return null;   // already on that spot
-    if(!opts.arp&&(eng==='chords'||eng==='bass'||(eng==='notes'&&S.noteMode==='mono')))   // a new chord / mono note / bass note ends the previous one
+    if(!opts.arp&&eng==='chords')   // a new chord ends the previous one; notes and bass overlap
       for(const e of this.events) if(e.eng===eng&&!e.arp&&e.layer===this.layer&&e.cycle===cyc&&e.tb<tb){
         if(e.durB==null) e.clipB=Math.max(0.05,tb-e.tb); else if(e.tb+e.durB>tb) e.durB=Math.max(0.05,tb-e.tb);
       }
@@ -1291,38 +1330,24 @@ function cycleArp(){
 }
 
 const NOTE_OFFSET=2;
-const noteCtl={
-  held:[],mono:null,monoH:null,poly:new Map(),
+const NOTE_VOICES=8;
+const noteCtl={   // every key gets its own voice, so overlapping notes sound together; with Glide a new note slides in from the one you hold
+  held:[],poly:new Map(),
   midiOf(k){return scaleMidi(k-NOTE_OFFSET,60+12*S.notes.octave);},   // keys start two scale steps below the root
   press(k){
-    this.held=this.held.filter(x=>x!==k); this.held.push(k);
+    this.held=this.held.filter(x=>x!==k);
     const m=this.midiOf(k),tm=trigTime(),t=tm.play;
-    if(S.noteMode==='mono'){
-      if(this.mono&&!this.mono.released){this.mono.setFreq(m,t,S.notes.glide); engines.notes.farpTrigger(t);}
-      else this.mono=engines.notes.play(m,1,t);
-      liveOff(this.monoH,tm.log); this.monoH=liveOn('notes',[m],1,false,false,tm);
-    }else{
-      this.releasePoly(k);
-      if(this.poly.size>=4) this.releasePoly(this.poly.keys().next().value);
-      this.poly.set(k,{v:engines.notes.play(m,0.8,t),h:liveOn('notes',[m],0.8,false,false,tm)});
-    }
+    const from=this.held.length?this.poly.get(this.held[this.held.length-1]):null, g=S.notes.glide, slide=!!from&&g>0&&from.m!==m;
+    this.held.push(k); this.releasePoly(k);
+    if(this.poly.size>=NOTE_VOICES) this.releasePoly(this.poly.keys().next().value);
+    const v=engines.notes.play(slide?from.m:m,1,t); if(slide) v.setFreq(m,t,g);
+    this.poly.set(k,{v,m,h:liveOn('notes',[m],1,false,false,tm)});
     lastPlayed=noteName(m);
   },
-  release(k){
-    this.held=this.held.filter(x=>x!==k);
-    if(S.noteMode==='mono'){
-      if(!this.mono) return;
-      if(this.held.length){
-        const m=this.midiOf(this.held[this.held.length-1]);
-        if(m!==this.mono.midi){const tm=trigTime(); this.mono.setFreq(m,tm.play,S.notes.glide); liveOff(this.monoH,tm.log); this.monoH=liveOn('notes',[m],1,false,true,tm); lastPlayed=noteName(m);}
-      }else{const rt=relAt(this.monoH?this.monoH.play:ctx.currentTime); this.mono.release(rt); this.mono=null; liveOff(this.monoH,rt); this.monoH=null;}
-    }else this.releasePoly(k);
-  },
+  release(k){this.held=this.held.filter(x=>x!==k); this.releasePoly(k);},
   releasePoly(k){const e=this.poly.get(k); if(!e) return; const rt=relAt(e.h.play); e.v.release(rt); liveOff(e.h,rt); this.poly.delete(k);},
   panic(){
     this.held=[]; if(!ctx) return;
-    if(this.mono){this.mono.release(ctx.currentTime); this.mono=null;}
-    liveOff(this.monoH); this.monoH=null;
     [...this.poly.keys()].forEach(k=>this.releasePoly(k));
   }
 };
@@ -1524,7 +1549,6 @@ class BassEngine{
     this.shaper.curve=c;
   }
   play(midi,vel=1,t=ctx.currentTime){
-    for(const v of this.voices) if(v.t0<t&&v.relT>t) v.release(t);   // mono: a new note chokes the one before it
     return new BassVoice(this,midi,t,vel);
   }
 }
@@ -1552,7 +1576,7 @@ class BassVoice{
     if(dt<e.attack) return this.peak*dt/e.attack;
     return this.sus+(this.peak-this.sus)*Math.exp(-(dt-e.attack)/(e.hit/3));
   }
-  release(t){   // may be called again with an earlier time (the mono choke cutting a note the looper already scheduled to end)
+  release(t){   // may be called again with an earlier time (a released key cutting a note the looper already scheduled to end)
     t=Math.max(t,ctx.currentTime);
     if(t>=this.relT) return;
     this.relT=t; this.released=true;
@@ -1614,8 +1638,9 @@ function loopChordAt(t){   // the chord the loop is playing at time t: the last 
   }
   return best;
 }
-const bassCtl={
-  held:[],voice:null,prev:null,h:null,lastChord:null,labelSig:'',
+const BASS_VOICES=4;
+const bassCtl={   // every key gets its own voice, so overlapping bass notes sound together
+  held:[],keys:new Map(),lastChord:null,labelSig:'',
   follow(){return S.bass.layout==='follow';},
   chordAt(t){   // the chord you hold > the loop's chord > the last chord you played > chord I
     const cur=chordCtl.cur; if(cur) return chordInfo(chordRoot(cur.key),cur.midis);
@@ -1631,22 +1656,24 @@ const bassCtl={
     if(!this.follow()) return scaleMidi(k-NOTE_OFFSET,36+12*S.bass.octave);   // scale layout: root on the O key, C2 octave
     return this.role(k,this.chordAt(t??(ctx?ctx.currentTime:0))).m;
   },
-  sounding(){return this.voice&&!this.voice.released;},
   press(k){
-    this.held=this.held.filter(x=>x!==k); this.held.push(k);
+    this.held=this.held.filter(x=>x!==k);
     const tm=trigTime(),t=tm.play,m=this.midiOf(k,t);
-    if(S.bass.glide>0&&this.sounding()) this.voice.setFreq(m,t,S.bass.glide);
-    else{this.prev=this.voice; this.voice=engines.bass.play(m,1,t);}
-    liveOff(this.h,tm.log); this.h=liveOn('bass',[m],1,false,false,tm);
+    const from=this.held.length?this.keys.get(this.held[this.held.length-1]):null, g=S.bass.glide, slide=!!from&&g>0&&from.m!==m;
+    this.held.push(k); this.drop(k);
+    if(this.keys.size>=BASS_VOICES) this.drop(this.keys.keys().next().value);
+    const v=engines.bass.play(slide?from.m:m,1,t); if(slide) v.setFreq(m,t,g);   // Glide: slide in from the key you hold (808 slide)
+    this.keys.set(k,{v,prev:null,m,h:liveOn('bass',[m],1,false,false,tm)});
     lastPlayed=noteName(m);
   },
-  retarget(at,log,smooth){   // follow mode: the chord changed under a held pad
-    if(!this.follow()||!this.held.length||!this.voice||!ctx) return;
-    const m=this.midiOf(this.held[this.held.length-1],at);
-    if(m===this.voice.midi) return;
-    if(this.sounding()&&(smooth||S.bass.glide>0)) this.voice.setFreq(m,at,smooth?0.012:S.bass.glide);
-    else{this.prev=this.voice; this.voice=engines.bass.play(m,1,at);}   // a new chord: hit the new note, like a bass player would
-    liveOff(this.h,log); this.h=liveOn('bass',[m],1,false,true,{play:at,log});
+  retarget(at,log,smooth){   // follow mode: the chord changed under the held pads
+    if(!this.follow()||!ctx) return;
+    for(const [k,e] of this.keys){
+      const m=this.midiOf(k,at); if(m===e.m) continue;
+      if(!e.v.released&&(smooth||S.bass.glide>0)) e.v.setFreq(m,at,smooth?0.012:S.bass.glide);
+      else{if(e.prev) e.prev.release(at); e.v.release(at); e.prev=e.v; e.v=engines.bass.play(m,1,at);}   // a new chord: hit the new note, like a bass player would
+      e.m=m; liveOff(e.h,log); e.h=liveOn('bass',[m],1,false,true,{play:at,log});
+    }
   },
   chordChanged(tm){   // a live chord was played (tm) or re-voiced (no tm)
     const cur=chordCtl.cur; if(!cur) return;
@@ -1654,31 +1681,25 @@ const bassCtl={
     if(tm) this.retarget(tm.play,tm.log,false); else if(ctx){const t=ctx.currentTime; this.retarget(t,t,true);}
   },
   loopChord(ev,at){if(!chordCtl.cur&&evChord(ev)) this.retarget(at,at,false);},   // the loop moves on to its next chord
+  drop(k){   // end key k's note now (re-pressed, or the oldest when every voice is busy)
+    const e=this.keys.get(k); if(!e) return;
+    const rt=relAt(e.h?e.h.play:ctx.currentTime); e.v.release(rt); if(e.prev) e.prev.release(rt); liveOff(e.h,rt); this.keys.delete(k);
+  },
   release(k){
     this.held=this.held.filter(x=>x!==k);
-    if(!this.voice) return;
+    const e=this.keys.get(k); if(!e) return;
     const now=ctx.currentTime;
-    if(this.held.length){   // fall back to the last key still held
-      const tm=trigTime(), m=this.midiOf(this.held[this.held.length-1],tm.play);
-      if(m===this.voice.midi&&this.sounding()) return;
-      if(this.sounding()) this.voice.setFreq(m,tm.play,S.bass.glide); else{this.prev=this.voice; this.voice=engines.bass.play(m,1,tm.play);}
-      liveOff(this.h,tm.log); this.h=liveOn('bass',[m],1,false,true,tm); lastPlayed=noteName(m);
-      return;
+    if(e.v.t0>now+0.003){   // let go just before a queued chord-change hit: drop that hit
+      liveOff(e.h,e.v.t0); if(e.h&&e.h.ev) looper.events=looper.events.filter(x=>x!==e.h.ev);
+      e.v.cancel(); if(e.prev) e.prev.release(now); this.keys.delete(k); return;
     }
-    if(this.voice.t0>now+0.003){   // let go just before a queued chord-change hit: drop that hit
-      liveOff(this.h,this.voice.t0); if(this.h&&this.h.ev) looper.events=looper.events.filter(e=>e!==this.h.ev);
-      this.voice.cancel(); if(this.prev) this.prev.release(now);
-      this.voice=this.prev=null; this.h=null; return;
-    }
-    const rt=relAt(this.h?this.h.play:now);
-    this.voice.release(rt); if(this.prev) this.prev.release(rt);
-    this.voice=this.prev=null; liveOff(this.h,rt); this.h=null;
+    this.drop(k);
   },
   panic(){
     this.held=[]; if(!ctx) return;
     const t=ctx.currentTime;
-    if(this.voice) this.voice.release(t); if(this.prev) this.prev.release(t);
-    this.voice=this.prev=null; liveOff(this.h); this.h=null;
+    for(const e of this.keys.values()){e.v.release(t); if(e.prev) e.prev.release(t); liveOff(e.h);}
+    this.keys.clear();
   },
   tickLabels(){   // follow mode: relabel the pads whenever the sounding chord changes
     if(S.rightMode!=='bass'||!this.follow()||!ctx) return;
@@ -2031,7 +2052,7 @@ const HELP={
   decay:['Decay','How long a note takes to fall from its peak down to the Sustain level.'],
   sustain:['Sustain','The level a held note settles at after Decay. 0% gives plucky, percussive notes.'],
   release:['Release','How long a note keeps ringing after you let go.'],
-  glide:['Glide','In mono mode, slides smoothly from one note to the next (portamento).'],
+  glide:['Glide','While you hold a note, a new note slides in from its pitch (portamento). Both notes keep sounding.'],
   cutoff:['Cutoff','Where the filter starts cutting. Low-pass: lower is darker and muffled, higher is brighter. High-pass: removes everything below it.'],
   resonance:['Resonance','Boosts the frequencies right at the cutoff for a peaky, squelchy or whistling tone. Great while sweeping Cutoff.'],
   farp:['Filter arp','Moves the filter cutoff in a stepped pattern: Up, Down, Up-down or Random. Set Cutoff low; the pattern opens it up from there.'],
@@ -2074,7 +2095,7 @@ const HELP={
   bhit:['Hit length','How long the punch takes to settle down to the held level.'],
   battack:['Attack','Fade-in time of each note. Keep it short for a clicky front edge, raise it to soften the hit.'],
   brelease:['Release','How long the bass rings after you let go. The tone itself sustains for as long as you hold the key.'],
-  bglide:['Glide','Above 0, a new key pressed while one is held slides to the new pitch instead of hitting again (808 slides).'],
+  bglide:['Glide','Above 0, a new key pressed while one is held starts at the held note\'s pitch and slides to its own (808 slides). Both notes keep sounding.'],
   bcutoff:['Bass cutoff','Low-pass filter on the bass. Lower is rounder and darker; higher lets the click and drive through.'],
   bresonance:['Bass resonance','A peak at the cutoff, for a more nasal, synthy bass.'],
   bdrive:['Bass drive','Saturates the bass so it adds harmonics and stays audible on small speakers.'],
@@ -2121,7 +2142,7 @@ function setupUiMode(){
 }
 function buildEngineCard(en){
   const el=$('#card-'+en),isC=en==='chords';
-  let h=`<h3><span class="dot ${isC?'':'n'}"></span>${isC?'Chords':'Notes'} engine <span class="tag">${isC?'left hand · 4 voices':'right hand · mono / poly'}</span>${isC?'':CARD_TABS}</h3>`;
+  let h=`<h3><span class="dot ${isC?'':'n'}"></span>${isC?'Chords':'Notes'} engine <span class="tag">${isC?'left hand · 4 voices':'right hand · 8 voices'}</span>${isC?'':CARD_TABS}</h3>`;
   h+=`<div class="gname">Waveform${info('wave')}</div>`;
   h+=`<div class="waves">${WAVES.map(([id,l])=>`<button data-en="${en}" data-wave="${id}">${l}</button>`).join('')}</div>`;
   h+=`<div class="row adv"><div class="seg" data-en="${en}" data-seg="filterType"><button data-v="lowpass">Low-pass</button><button data-v="highpass">High-pass</button></div>${info('filterType')}`+
@@ -2189,7 +2210,6 @@ function syncParamUI(en,pid){
 }
 function syncGlobalUI(){
   $('#selRoot').value=S.root; $('#selScale').value=S.scale;
-  $$('#segMode button').forEach(b=>b.classList.toggle('active',b.dataset.v===S.noteMode));
   $('#master').value=S.master*1000; $('#masterOut').textContent=Math.round(S.master*100)+'%';
   $('#bpm').value=fmtBpm(S.bpm); $('#selQuant').value=S.quant; $('#selMagnet').value=S.magnet; $('#selDubLen').value=String(S.dubBars||0);
   $('#selDelayDiv').value=S.delayDiv;
@@ -2231,7 +2251,6 @@ function buildPanel(){
   });
   $('#selRoot').onchange=e=>setRoot(+e.target.value);
   $('#selScale').onchange=e=>setScale(e.target.value);
-  $$('#segMode button').forEach(b=>b.onclick=()=>{noteCtl.panic(); S.noteMode=b.dataset.v; markCustom(); syncGlobalUI(); flash('NOTES '+S.noteMode.toUpperCase()); saveState();});
   $('#master').oninput=e=>{S.master=e.target.value/1000; if(ctx) master.gain.setTargetAtTime(S.master,ctx.currentTime,0.02); $('#masterOut').textContent=Math.round(S.master*100)+'%'; updateMetroGain(); saveState();};
   $('#btnPanic').onclick=panic;
   $('#bpm').onchange=e=>{looper.setBpm(+e.target.value); syncGlobalUI();};
