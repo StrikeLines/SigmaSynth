@@ -474,6 +474,7 @@ const BASS_PARAMS={
   volume:{label:'Volume',short:'VOL',min:0,max:1.5,def:0.9,fmt:F.pct},
   octave:{label:'Octave',short:'OCTAVE',min:-2,max:2,step:1,def:0,fmt:F.st},
   pitch:{label:'Pitch',short:'PITCH',min:-12,max:12,step:1,def:0,fmt:F.st},
+  thump:{label:'Kick amount',short:'KICK',min:0,max:1,def:1,fmt:F.pct},
   punch:{label:'Punch',short:'PUNCH',min:0,max:1,def:0.5,fmt:F.pct},
   hit:{label:'Hit length',short:'HIT',min:0.02,max:0.5,exp:true,def:0.1,fmt:F.s},
   attack:{label:'Attack',short:'ATTACK',min:0.001,max:0.05,exp:true,def:0.002,fmt:F.s},
@@ -485,8 +486,8 @@ const BASS_PARAMS={
   reverb:{label:'Reverb',short:'REVERB',min:0,max:1,def:0.02,fmt:F.pct},
   delay:{label:'Delay',short:'DELAY',min:0,max:1,def:0,fmt:F.pct},
 };
-const BASS_GROUPS=[['Sound',['volume','octave','pitch']],['Punch & envelope',['punch','hit','attack','release','glide']],['Tone',['cutoff','resonance','drive']],['Sends',['reverb','delay']]];
-const BASS_BASIC=new Set(['volume','octave','punch','hit','release','cutoff','drive','reverb']);
+const BASS_GROUPS=[['Sound',['volume','octave','pitch']],['Punch & envelope',['thump','punch','hit','attack','release','glide']],['Tone',['cutoff','resonance','drive']],['Sends',['reverb','delay']]];
+const BASS_BASIC=new Set(['volume','octave','thump','punch','hit','release','cutoff','drive','reverb']);
 const BASS_KICKS={'808':'808','acoustic':'Acoustic','lofi':'Lo-Fi','kit':'Drum kit'};
 const RIGHT_MODES=['notes','drums','bass'];
 function defaultBass(){const b={kick:'808',layout:'scale'};for(const k in BASS_PARAMS)b[k]=BASS_PARAMS[k].def;return b;}
@@ -1429,9 +1430,9 @@ function lofi(a,sr){
   for(let i=0;i<a.length;i++){if(i%4===0)held=Math.round(Math.tanh(a[i]*1.6)*steps)/steps;out[i]=held;}
   return biquad(out,'lp',5000,0.7,sr);
 }
-function toBuffer(a){
-  let pk=0;for(let i=0;i<a.length;i++)pk=Math.max(pk,Math.abs(a[i]));
-  const g=pk>0?0.9/pk:1,buf=ctx.createBuffer(1,a.length,ctx.sampleRate),d=buf.getChannelData(0);
+const peakOf=a=>{let pk=0;for(let i=0;i<a.length;i++)pk=Math.max(pk,Math.abs(a[i]));return pk;};
+function toBuffer(a,gain){   // normalize to a 0.9 peak, or use the given gain
+  const pk=peakOf(a), g=gain??(pk>0?0.9/pk:1),buf=ctx.createBuffer(1,a.length,ctx.sampleRate),d=buf.getChannelData(0);
   for(let i=0;i<a.length;i++)d[i]=a[i]*g;
   return buf;
 }
@@ -1480,21 +1481,22 @@ const drumCtl={
 
 /* =================== bass (pitched, held kick) =================== */
 // the kit kick's sweep and click, but the body never fades: after T0 it is a steady sine whose period is a whole number
-// of samples, so loopStart..loopEnd (8 periods) repeats seamlessly for as long as the key is held
-function renderBassKick(kit,sr){
+// of samples, so loopStart..loopEnd (8 periods) repeats seamlessly for as long as the key is held.
+// amt (Kick amount) scales the kick part: the pitch drop, the louder start and the click. At 0 it is the pure tone from the first sample.
+function renderBassKick(kit,sr,amt=1){
   const ac=kit!=='808', f0=ac?150:180, fd=ac?0.018:0.035;
   const P=Math.round(sr/(ac?52:50)), fB=sr/P;                 // integer-sample period => seamless loop
   const T0=Math.ceil(0.4*sr/4)*4, ls=T0+4*P, le=ls+8*P, n=le+256;
   const a=new Float32Array(n); let ph=0, phT0=0;
   for(let i=0;i<n;i++){
     const t=i/sr;
-    if(i<T0){const f=fB+(f0-fB)*Math.exp(-t/fd); ph+=2*Math.PI*f/sr; a[i]=(0.38+0.62*Math.exp(-t/0.07))*Math.sin(ph);}
+    if(i<T0){const f=fB+amt*(f0-fB)*Math.exp(-t/fd); ph+=2*Math.PI*f/sr; a[i]=(0.38+amt*0.62*Math.exp(-t/0.07))*Math.sin(ph);}
     else{if(i===T0) phT0=ph+2*Math.PI/P; a[i]=0.38*Math.sin(phT0+2*Math.PI*((i-T0)%P)/P);}   // exact period P from here on
   }
   const rnd=seeded(4321), nc=Math.floor(0.03*sr), nz=new Float32Array(nc);
   for(let i=0;i<nc;i++) nz[i]=rnd()*2-1;
   const cl=ac?biquad(nz,'lp',3500,0.7,sr):biquad(nz,'bp',2200,0.8,sr), tau=ac?0.006:0.004, cg=ac?0.7:0.6;
-  for(let i=0;i<nc;i++) a[i]+=cl[i]*cg*Math.exp(-i/sr/tau);
+  for(let i=0;i<nc;i++) a[i]+=amt*cl[i]*cg*Math.exp(-i/sr/tau);
   const drv=ac?2.2:2.6, nrm=Math.tanh(drv);
   for(let i=0;i<n;i++) a[i]=Math.tanh(a[i]*drv)/nrm;
   const out=kit==='lofi'?lofi(a,sr):a;   // its sample-and-hold every 4 samples stays periodic: T0 and 8P are multiples of 4
@@ -1523,8 +1525,12 @@ class BassEngine{
   kitName(){const k=S.bass.kick==='kit'?S.drums.kit:S.bass.kick; return BASS_KICKS[k]&&k!=='kit'?k:'808';}
   kick(){
     const kit=this.kitName();
-    if(!this.kicks[kit]){const r=renderBassKick(kit,ctx.sampleRate); this.kicks[kit]={buf:toBuffer(r.data),base:r.base,ls:r.ls,le:r.le};}
-    return this.kicks[kit];
+    const amt=Math.round(clamp(S.bass.thump??1,0,1)*20)/20, key=kit+'|'+amt;   // one rendered sample per kit and 5% step of Kick amount
+    if(!this.kicks[key]){
+      this.fullGain??={}; this.fullGain[kit]??=0.9/peakOf(renderBassKick(kit,ctx.sampleRate,1).data);   // every amount uses the full kick's gain, so the held tone stays the same level
+      const r=renderBassKick(kit,ctx.sampleRate,amt); this.kicks[key]={buf:toBuffer(r.data,this.fullGain[kit]),base:r.base,ls:r.ls,le:r.le};
+    }
+    return this.kicks[key];
   }
   apply(shaper){
     const p=S.bass,t=ctx.currentTime;
@@ -2091,6 +2097,7 @@ const HELP={
   bvolume:['Bass volume','How loud the bass is, as part of its sound. Use the BASS knob in the MIX to balance it against the rest.'],
   boctave:['Bass octave','Shifts the bass pads by whole octaves. The root sits on the O key, in the C2 octave at 0. Also on the , and . keys in bass mode.'],
   bpitch:['Bass pitch','Transposes the bass in semitones.'],
+  bthump:['Kick amount','How much kick drum is in each note: the pitch drop, the click and the loud start. 100% is a full 808 hit; 0% is just the pure bass tone, steady from the first moment.'],
   bpunch:['Punch','How much louder the first hit is than the held tone. 0% is a flat, even bass; high values give a hard 808 thump.'],
   bhit:['Hit length','How long the punch takes to settle down to the held level.'],
   battack:['Attack','Fade-in time of each note. Keep it short for a clicky front edge, raise it to soften the hit.'],
